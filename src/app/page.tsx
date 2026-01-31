@@ -147,9 +147,15 @@ export default function Dashboard() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Per-Subject Attendance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subject_stats.map((stat) => (
-              <DashboardCard key={stat.subject_code} stats={stat} />
-            ))}
+            {subject_stats
+              .filter((stat) => {
+                const subject = data.subjects.find(s => s.subject_code === stat.subject_code || s.subject_name === stat.subject_name);
+                return subject && subject.zero_credit_type !== 'library' && subject.zero_credit_type !== 'seminar';
+              })
+              .map((stat) => (
+                <DashboardCard key={stat.subject_code || stat.subject_name} stats={stat} />
+              ))
+            }
           </div>
         </div>
 

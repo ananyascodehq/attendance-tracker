@@ -1,14 +1,17 @@
+export type ZeroCreditType = 'library' | 'seminar' | 'vac';
+
 export interface Subject {
-  subject_code: string;
+  subject_code?: string;
   subject_name: string;
   credits: 0 | 1.5 | 3 | 4;
+  zero_credit_type?: ZeroCreditType; // For 0-credit courses: 'library', 'seminar', or 'vac'
 }
 
 export interface TimetableSlot {
   id: string;
   day_of_week: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
   period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  subject_code: string;
+  subject_code?: string;
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   duration_hours?: number; // Optional, defaults to 1.0 if missing per spec
@@ -20,7 +23,7 @@ export interface AttendanceLog {
   id: string;
   date: string;
   period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  subject_code: string;
+  subject_code?: string;
   status: AttendanceStatus;
   notes?: string;
 }
@@ -42,7 +45,7 @@ export interface ODLog {
   id: string;
   date: string;
   period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  subject_code: string;
+  subject_code?: string;
   hours_used: number;
   reason?: string;
   approval_status: ODApprovalStatus;

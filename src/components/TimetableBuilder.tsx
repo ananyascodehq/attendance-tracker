@@ -26,6 +26,7 @@ const PERIOD_TIMES: Record<number, { start: string; end: string; duration: numbe
 interface DraggedData {
   type: 'subject' | 'slot';
   subject_code?: string;
+  subject_name?: string;
   slot?: TimetableSlot;
 }
 
@@ -45,9 +46,20 @@ export default function TimetableBuilder({
     ) || null;
   };
 
-  const isLabSubject = (subjectCode: string): boolean => {
+  const isLabSubject = (subjectCode: string | undefined): boolean => {
     const subject = subjects.find((s) => s.subject_code === subjectCode);
     return subject ? subject.subject_name.toLowerCase().includes('lab') : false;
+  };
+
+  const isVACSubject = (subjectCode: string | undefined): boolean => {
+    const subject = subjects.find((s) => s.subject_code === subjectCode);
+    return subject ? subject.zero_credit_type === 'vac' : false;
+  };
+
+  const getSubjectDisplayName = (code: string | undefined): string => {
+    const subject = subjects.find((s) => s.subject_code === code);
+    if (!subject) return code || 'Unknown';
+    return code ? `${code} - ${subject.subject_name}` : subject.subject_name;
   };
 
   const canFitConsecutivePeriods = (day: string, startPeriod: number, count: number): boolean => {
@@ -65,13 +77,16 @@ export default function TimetableBuilder({
     if (draggedData.type === 'subject') {
       // Dragging from subject palette
       const isLab = isLabSubject(draggedData.subject_code!);
-      const periodsNeeded = isLab ? 3 : 1;
+      const isVAC = isVACSubject(draggedData.subject_code!);
+      const periodsNeeded = isLab ? 3 : isVAC ? 2 : 1;
 
       // Check if we can fit the required periods
       if (!canFitConsecutivePeriods(day, period, periodsNeeded)) {
         alert(
           isLab
             ? `Lab class needs 3 consecutive periods. Cannot fit starting from period ${period}.`
+            : isVAC
+            ? `VAC needs 2 consecutive periods. Cannot fit starting from period ${period}.`
             : `Period ${period} is already occupied.`
         );
         setDraggedData(null);
@@ -86,12 +101,13 @@ export default function TimetableBuilder({
       for (let i = 0; i < periodsNeeded; i++) {
         const currentPeriod = period + i;
         const periodTime = PERIOD_TIMES[currentPeriod];
+        const subjectIdentifier = draggedData.subject_code || draggedData.subject_name || 'unknown';
         
         const newSlot: TimetableSlot = {
-          id: `${day}-${currentPeriod}`,
+          id: `${day}-${currentPeriod}-${subjectIdentifier}`,
           day_of_week: day as any,
           period_number: currentPeriod as any,
-          subject_code: draggedData.subject_code!,
+          subject_code: draggedData.subject_code,
           start_time: periodTime.start,
           end_time: periodTime.end,
           duration_hours: periodTime.duration,
@@ -101,9 +117,10 @@ export default function TimetableBuilder({
 
       onUpdate(updated);
     } else if (draggedData.type === 'slot' && draggedData.slot) {
-      // Moving existing slot - preserve lab behavior
+      // Moving existing slot - preserve lab/VAC behavior
       const isLab = isLabSubject(draggedData.slot.subject_code);
-      const periodsNeeded = isLab ? 3 : 1;
+      const isVAC = isVACSubject(draggedData.slot.subject_code);
+      const periodsNeeded = isLab ? 3 : isVAC ? 2 : 1;
 
       // Remove all periods of this slot from original position
       let updated = timetable.filter((s) => s.subject_code !== draggedData.slot!.subject_code || s.day_of_week !== draggedData.slot!.day_of_week);
@@ -113,6 +130,8 @@ export default function TimetableBuilder({
         alert(
           isLab
             ? `Lab class needs 3 consecutive periods. Cannot fit starting from period ${period}.`
+            : isVAC
+            ? `VAC needs 2 consecutive periods. Cannot fit starting from period ${period}.`
             : `Period ${period} is already occupied.`
         );
         setDraggedData(null);
@@ -147,7 +166,7 @@ export default function TimetableBuilder({
     onUpdate(timetable.filter((slot) => slot.id !== id));
   };
 
-  const getSubjectColor = (code: string) => {
+  const getSubjectColor = (code: string | undefined) => {
     const colors = [
       'bg-blue-100 border-blue-300 text-blue-900',
       'bg-green-100 border-green-300 text-green-900',
@@ -157,7 +176,7 @@ export default function TimetableBuilder({
       'bg-indigo-100 border-indigo-300 text-indigo-900',
     ];
     const subjectIndex = subjects.findIndex((s) => s.subject_code === code);
-    return colors[subjectIndex % colors.length];
+    return colors[Math.max(0, subjectIndex) % colors.length];
   };
 
   const truncateText = (text: string, maxLength: number = 12): string => {
@@ -179,6 +198,7 @@ export default function TimetableBuilder({
         <ul className="text-xs space-y-1">
           <li>• Drag any <strong>color-coded subject card</strong> from above and drop it on a time slot</li>
           <li>• <strong>Lab classes</strong> automatically fill 3 consecutive periods</li>
+          <li>• <strong>VAC courses</strong> automatically fill 2 consecutive periods</li>
           <li>• Drag <strong>existing classes</strong> within the grid to reschedule them</li>
           <li>• Click the <strong>×</strong> button to delete a class</li>
         </ul>
@@ -190,20 +210,29 @@ export default function TimetableBuilder({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {subjects.map((subject) => (
             <div
-              key={subject.subject_code}
+              key={subject.subject_code || subject.subject_name}
               draggable
               onDragStart={() =>
-                setDraggedData({ type: 'subject', subject_code: subject.subject_code })
+                setDraggedData({ type: 'subject', subject_code: subject.subject_code, subject_name: subject.subject_name })
               }
               onDragEnd={() => setDraggedData(null)}
               className={`${getSubjectColor(
                 subject.subject_code
               )} border-2 p-3 rounded-lg cursor-grab active:cursor-grabbing hover:shadow-lg transition-shadow`}
             >
-              <div className="font-bold text-sm">{subject.subject_code}</div>
-              <div className="text-xs leading-tight mt-1">{truncateText(subject.subject_name, 15)}</div>
+              {subject.subject_code ? (
+                <>
+                  <div className="font-bold text-sm">{subject.subject_code}</div>
+                  <div className="text-xs leading-tight mt-1">{truncateText(subject.subject_name, 15)}</div>
+                </>
+              ) : (
+                <div className="text-xs font-semibold leading-tight">{truncateText(subject.subject_name, 15)}</div>
+              )}
               {isLabSubject(subject.subject_code) && (
                 <div className="text-xs mt-2 font-semibold text-orange-600">🔬 Lab</div>
+              )}
+              {isVACSubject(subject.subject_code) && (
+                <div className="text-xs mt-2 font-semibold text-purple-600">📚 VAC</div>
               )}
             </div>
           ))}
@@ -231,17 +260,44 @@ export default function TimetableBuilder({
               </tr>
             </thead>
             <tbody>
-              {DAYS.map((day) => (
+              {DAYS.map((day) => {
+                // Track which periods have already been rendered as part of a multi-period slot
+                const renderedPeriods = new Set<number>();
+                
+                return (
                   <tr key={day}>
                     <td className="bg-gray-50 border px-4 py-2 font-semibold">{day}</td>
                     {PERIODS.map((period) => {
+                      // Skip if this period was already rendered as part of a previous multi-period slot
+                      if (renderedPeriods.has(period)) {
+                        return null;
+                      }
+
                       const slot = getSlotForPosition(day, period);
                       const cellId = `${day}-${period}`;
                       const isHovered = dragOverCell === cellId && draggedData;
 
+                      // Check if this is a multi-period slot
+                      let colSpan = 1;
+                      if (slot) {
+                        const isLab = isLabSubject(slot.subject_code);
+                        const isVAC = isVACSubject(slot.subject_code);
+                        if (isLab) {
+                          colSpan = 3;
+                          // Mark next 2 periods as rendered
+                          renderedPeriods.add(period + 1);
+                          renderedPeriods.add(period + 2);
+                        } else if (isVAC) {
+                          colSpan = 2;
+                          // Mark next period as rendered
+                          renderedPeriods.add(period + 1);
+                        }
+                      }
+
                       return (
                         <td
                           key={cellId}
+                          colSpan={colSpan}
                           className={`border p-0 h-24 relative align-top transition-all ${
                             isHovered ? 'bg-blue-100 ring-2 ring-blue-400' : 'hover:bg-gray-50'
                           }`}
@@ -267,16 +323,31 @@ export default function TimetableBuilder({
                               )} border-2 p-2 h-full cursor-move hover:shadow-md transition-shadow flex flex-col justify-between group`}
                             >
                               <div>
-                                <div className="text-xs font-bold">{slot.subject_code}</div>
-                                <div className="text-xs leading-tight">
-                                  {truncateText(
-                                    subjects.find((s) => s.subject_code === slot.subject_code)
-                                      ?.subject_name || '',
-                                    12
-                                  )}
-                                </div>
+                                {slot.subject_code ? (
+                                  <>
+                                    <div className="text-xs font-bold">{slot.subject_code}</div>
+                                    <div className="text-xs leading-tight">
+                                      {truncateText(
+                                        subjects.find((s) => s.subject_code === slot.subject_code)
+                                          ?.subject_name || '',
+                                        12
+                                      )}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-xs font-semibold leading-tight">
+                                    {truncateText(
+                                      subjects.find((s) => s.subject_name && s.subject_code === slot.subject_code)
+                                        ?.subject_name || '',
+                                      12
+                                    )}
+                                  </div>
+                                )}
                                 {isLabSubject(slot.subject_code) && (
                                   <div className="text-xs mt-1 font-semibold text-orange-600">🔬 Lab</div>
+                                )}
+                                {isVACSubject(slot.subject_code) && (
+                                  <div className="text-xs mt-1 font-semibold text-purple-600">📚 VAC</div>
                                 )}
                               </div>
                               <button
@@ -298,7 +369,8 @@ export default function TimetableBuilder({
                       );
                     })}
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           <div className="bg-gray-50 rounded-lg p-4 text-sm mt-6">

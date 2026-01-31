@@ -38,9 +38,13 @@ export const useAttendanceData = () => {
   const addAttendanceLog = useCallback(
     (log: Omit<AttendanceLog, 'id'>) => {
       if (!data) return;
+      // Use subject_code if available, else use subject_name
+      const subjectIdentifier = log.subject_code || 
+        data.subjects.find(s => s.subject_code === log.subject_code)?.subject_name || 
+        log.subject_code;
       const newLog: AttendanceLog = {
         ...log,
-        id: `${log.date}-${log.period_number}-${log.subject_code}`,
+        id: `${log.date}-${log.period_number}-${subjectIdentifier}`,
       };
       setData({
         ...data,
