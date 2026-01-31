@@ -48,12 +48,15 @@ const isInCATExamPeriod = (dateStr: string, semesterConfig: SemesterConfig | nul
 };
 
 // Calculate scheduled sessions from semester start date to a given date
+// For labs (3 consecutive periods), counts as 1 session per day
+// For VAC (2 consecutive periods), counts as 1 session per day
 export const getScheduledSessionsUntilDate = (
   subjectCode: string | undefined,
   timetable: TimetableSlot[],
   semesterConfig: SemesterConfig | null,
   holidays: Holiday[],
-  upToDate: string
+  upToDate: string,
+  subjects?: Subject[]
 ): number => {
   if (!semesterConfig) return 0;
 
@@ -67,6 +70,12 @@ export const getScheduledSessionsUntilDate = (
   const subjectSlots = timetable.filter((slot) => slot.subject_code === subjectCode);
 
   if (subjectSlots.length === 0) return 0;
+
+  // Check if this is a lab or VAC (multi-period = 1 session)
+  const subject = subjects?.find(s => s.subject_code === subjectCode || s.subject_name === subjectCode);
+  const isLab = subject ? (subject.credits === 1.5 || subject.subject_name.toLowerCase().includes('lab')) : false;
+  const isVAC = subject?.zero_credit_type === 'vac';
+  const isMultiPeriodSession = isLab || isVAC;
 
   // Get holiday dates as strings for easy comparison
   const holidayDates = new Set(holidays.map((h) => h.date));
@@ -83,9 +92,19 @@ export const getScheduledSessionsUntilDate = (
     // Skip if it's a holiday, Sunday, or during CAT exam period
     if (holidayDates.has(dateStr) || dayName === 'Sunday' || isInCATExamPeriod(dateStr, semesterConfig)) continue;
 
-    // Count how many periods this subject has on this day
-    const periodsOnThisDay = subjectSlots.filter((slot) => slot.day_of_week === dayName).length;
-    scheduledCount += periodsOnThisDay;
+    // Count sessions on this day
+    const slotsOnThisDay = subjectSlots.filter((slot) => slot.day_of_week === dayName);
+    
+    if (isMultiPeriodSession) {
+      // For labs/VAC: count as 1 session if there are any periods on this day
+      // (All 3 lab periods or 2 VAC periods count as 1 session)
+      if (slotsOnThisDay.length > 0) {
+        scheduledCount += 1;
+      }
+    } else {
+      // For regular classes: each period is a separate session
+      scheduledCount += slotsOnThisDay.length;
+    }
   }
 
   return scheduledCount;
@@ -98,7 +117,8 @@ export const calculatePerSubjectAttendance = (
   attendance: AttendanceLog[],
   holidays: Holiday[],
   upToDate: string,
-  semesterConfig?: SemesterConfig | null
+  semesterConfig?: SemesterConfig | null,
+  subjects?: Subject[]
 ): {
   total_sessions: number;
   attended_sessions: number;
@@ -111,7 +131,7 @@ export const calculatePerSubjectAttendance = (
 
   // Calculate total scheduled sessions from semester start to today
   const total = semesterConfig
-    ? getScheduledSessionsUntilDate(subjectCode, timetable, semesterConfig, holidays, upToDate)
+    ? getScheduledSessionsUntilDate(subjectCode, timetable, semesterConfig, holidays, upToDate, subjects)
     : 0;
 
   // Get attendance logs for this subject up to the given date
@@ -121,11 +141,31 @@ export const calculatePerSubjectAttendance = (
       !isAfter(parseISO(log.date), upToDateObj)
   );
 
-  // Count absent (leave) periods
-  const absentCount = attendanceForSubject.filter((log) => log.status === 'leave').length;
+  // Check if this is a lab or VAC (multi-period = 1 session)
+  const subject = subjects?.find(s => s.subject_code === subjectCode || s.subject_name === subjectCode);
+  const isLab = subject ? (subject.credits === 1.5 || subject.subject_name.toLowerCase().includes('lab')) : false;
+  const isVAC = subject?.zero_credit_type === 'vac';
+  const isMultiPeriodSession = isLab || isVAC;
 
-  // Count OD periods (count as attended)
-  const odCount = attendanceForSubject.filter((log) => log.status === 'od').length;
+  let absentCount: number;
+  let odCount: number;
+
+  if (isMultiPeriodSession) {
+    // For labs/VAC: count unique DATES with leave/od status (not individual periods)
+    // If any period on a day is marked absent, the whole lab session is absent
+    const absentDates = new Set(
+      attendanceForSubject.filter((log) => log.status === 'leave').map(log => log.date)
+    );
+    const odDates = new Set(
+      attendanceForSubject.filter((log) => log.status === 'od').map(log => log.date)
+    );
+    absentCount = absentDates.size;
+    odCount = odDates.size;
+  } else {
+    // For regular classes: count each period separately
+    absentCount = attendanceForSubject.filter((log) => log.status === 'leave').length;
+    odCount = attendanceForSubject.filter((log) => log.status === 'od').length;
+  }
 
   // Attended = total scheduled - absent + od already counted in total
   // Actually: attended = (total - absent) because unmarked periods are present
@@ -208,7 +248,8 @@ export const calculateSafeMargin = (
   timetable: TimetableSlot[],
   attendance: AttendanceLog[],
   holidays: Holiday[],
-  semesterConfig: SemesterConfig
+  semesterConfig: SemesterConfig,
+  subjects?: Subject[]
 ): {
   future_sessions: number;
   projected_total: number;
@@ -216,35 +257,37 @@ export const calculateSafeMargin = (
   must_attend: number;
   can_skip: number;
 } => {
-  const today = new Date();
-  const lastInstruction = parseISO(semesterConfig.last_instruction_date);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  // Current attendance for subject
+  // Current attendance for subject (sessions up to today)
   const current = calculatePerSubjectAttendance(
     subjectCode,
     timetable,
     attendance,
     holidays,
-    new Date().toISOString().split('T')[0],
-    semesterConfig
+    todayStr,
+    semesterConfig,
+    subjects
   );
 
-  // Get subject slots
-  const subjectSlots = timetable.filter((slot) => slot.subject_code === subjectCode);
-
-  // Count future sessions (rough estimate based on slots)
-  // In production, this would use actual date generation
-  let future_sessions = 0;
-
-  // For now, estimate based on weekly pattern
-  const daysRemaining = Math.ceil(
-    (lastInstruction.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  // Get TOTAL scheduled sessions from semester start to semester end
+  // This uses the actual timetable, holidays, and CAT periods
+  const totalScheduledSessions = getScheduledSessionsUntilDate(
+    subjectCode,
+    timetable,
+    semesterConfig,
+    holidays,
+    semesterConfig.end_date,
+    subjects
   );
-  const weeksRemaining = Math.ceil(daysRemaining / 7);
 
-  // Count unique periods per week for this subject
-  const uniquePeriodsPerWeek = new Set(subjectSlots.map((s) => s.period_number)).size;
-  future_sessions = uniquePeriodsPerWeek * weeksRemaining;
+  // Future sessions = Total scheduled - Sessions up to today
+  // This accurately accounts for:
+  // - Actual timetable (which days & how many periods per day)
+  // - All holidays
+  // - CAT exam periods
+  // - Sundays
+  const future_sessions = Math.max(0, totalScheduledSessions - current.total_sessions);
 
   const projected_total = current.total_sessions + future_sessions;
   const min_required = Math.ceil(projected_total * (PER_SUBJECT_MINIMUM / 100));
@@ -252,7 +295,7 @@ export const calculateSafeMargin = (
   const can_skip = Math.max(0, Math.floor(future_sessions - must_attend));
 
   return {
-    future_sessions: Math.max(0, future_sessions),
+    future_sessions,
     projected_total,
     min_required,
     must_attend,
@@ -267,7 +310,8 @@ export const calculateSubjectStats = (
   attendance: AttendanceLog[],
   holidays: Holiday[],
   upToDate: string,
-  semesterConfig?: SemesterConfig | null
+  semesterConfig?: SemesterConfig | null,
+  subjects?: Subject[]
 ): AttendanceStats => {
   const { total_sessions, attended_sessions, present_count, absent_count, od_count, percentage } = calculatePerSubjectAttendance(
     subject.subject_code,
@@ -275,7 +319,8 @@ export const calculateSubjectStats = (
     attendance,
     holidays,
     upToDate,
-    semesterConfig
+    semesterConfig,
+    subjects
   );
 
   const status = getStatus(percentage, false);
@@ -307,7 +352,7 @@ export const calculateOverallStats = (
   subject_stats: AttendanceStats[];
 } => {
   const subject_stats = subjects.map((subject) =>
-    calculateSubjectStats(subject, timetable, attendance, holidays, upToDate, semesterConfig)
+    calculateSubjectStats(subject, timetable, attendance, holidays, upToDate, semesterConfig, subjects)
   );
 
   const overall_percentage = calculateOverallAttendance(
