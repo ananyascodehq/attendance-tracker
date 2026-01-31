@@ -1,52 +1,70 @@
 'use client';
 
 import { AttendanceStats } from '@/types';
-import { STATUS_TAILWIND } from '@/lib/constants';
 
 interface DashboardCardProps {
   stats: AttendanceStats;
 }
 
 export const DashboardCard = ({ stats }: DashboardCardProps) => {
+  const statusColors = {
+    safe: 'bg-green-50 border-green-300',
+    warning: 'bg-yellow-50 border-yellow-300',
+    danger: 'bg-red-50 border-red-300',
+  };
+
+  const percentageColors = {
+    safe: 'text-green-700 bg-green-100',
+    warning: 'text-yellow-700 bg-yellow-100',
+    danger: 'text-red-700 bg-red-100',
+  };
+
+  const progressColors = {
+    safe: 'bg-green-500',
+    warning: 'bg-yellow-500',
+    danger: 'bg-red-500',
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow p-4 border-l-4" style={{borderColor: stats.status === 'safe' ? '#10b981' : stats.status === 'caution' ? '#f59e0b' : '#ef4444'}}>
-      <h3 className="font-semibold text-lg mb-2">{stats.subject_name}</h3>
-      <p className="text-sm text-gray-600 mb-2">{stats.subject_code}</p>
-      
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-medium">Attendance</span>
-          <span className={`text-lg font-bold ${STATUS_TAILWIND[stats.status]}`}>
-            {stats.percentage}%
-          </span>
+    <div
+      className={`rounded-lg border-2 p-4 transition-all ${statusColors[stats.status]}`}
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-semibold text-lg">{stats.subject_name}</h3>
+          <p className="text-sm text-gray-600">{stats.subject_code}</p>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <span
+          className={`text-2xl font-bold px-3 py-1 rounded-lg ${percentageColors[stats.status]}`}
+        >
+          {stats.percentage}%
+        </span>
+      </div>
+
+      <div className="mb-4">
+        <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className={`h-2 rounded-full transition-all ${
-              stats.status === 'safe'
-                ? 'bg-green-500'
-                : stats.status === 'caution'
-                ? 'bg-yellow-500'
-                : 'bg-red-500'
-            }`}
+            className={`h-3 rounded-full transition-all ${progressColors[stats.status]}`}
             style={{ width: `${Math.min(stats.percentage, 100)}%` }}
           ></div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-sm">
-        <div>
-          <p className="text-gray-500">Present</p>
-          <p className="font-semibold">{stats.present}</p>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="bg-white/50 p-2 rounded">
+          <p className="text-gray-600">Cumulative Periods</p>
+          <p className="font-semibold">{stats.total_sessions}</p>
         </div>
-        <div>
-          <p className="text-gray-500">Absent</p>
-          <p className="font-semibold">{stats.absent}</p>
+        <div className="bg-white/50 p-2 rounded">
+          <p className="text-gray-600">Attended</p>
+          <p className="font-semibold">{stats.attended_sessions}</p>
         </div>
-        <div>
-          <p className="text-gray-500">OD</p>
-          <p className="font-semibold">{stats.od}</p>
-        </div>
+      </div>
+
+      <div className="mt-2 pt-2 border-t border-gray-300/50">
+        <p className="text-xs text-gray-600">
+          Credits: {stats.credits}
+        </p>
       </div>
     </div>
   );
