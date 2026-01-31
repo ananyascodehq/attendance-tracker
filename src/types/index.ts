@@ -73,6 +73,9 @@ export interface AttendanceStats {
   credits: 0 | 1.5 | 3 | 4;
   total_sessions: number;
   attended_sessions: number;
+  present_count: number;
+  absent_count: number;
+  od_count: number;
   percentage: number;
   status: 'safe' | 'warning' | 'danger';
 }

@@ -3,8 +3,10 @@
 import { useAttendanceData } from '@/hooks/useAttendanceData';
 import { DashboardCard } from '@/components/DashboardCard';
 import { SubjectDetailModal } from '@/components/SubjectDetailModal';
+import { AttendanceChart } from '@/components/AttendanceChart';
 import { useEffect, useState } from 'react';
 import { OverallStats, AttendanceStats } from '@/types';
+import Link from 'next/link';
 
 export default function Dashboard() {
   const { data, loading, getStats } = useAttendanceData();
@@ -13,6 +15,7 @@ export default function Dashboard() {
     subject_stats: AttendanceStats[];
   } | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<AttendanceStats | null>(null);
+  const [showChart, setShowChart] = useState(false);
 
   useEffect(() => {
     if (data && !loading) {
@@ -23,29 +26,40 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <div className="text-xl text-gray-700">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (!data || data.subjects.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              Welcome to ERP Attendance Tracker
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-6">
+        <div className="max-w-lg w-full">
+          <div className="bg-white rounded-3xl shadow-2xl shadow-blue-100 p-10 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Welcome to AttendanceTracker
             </h2>
-            <p className="text-gray-600 mb-6">
-              To get started, set up your semester configuration, subjects, and timetable.
+            <p className="text-gray-600 mb-8 text-lg">
+              Set up your semester, subjects, and timetable to start tracking your attendance.
             </p>
-            <a
-              href="/planner"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold"
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold text-lg shadow-lg shadow-blue-200 transition-all hover:shadow-xl hover:-translate-y-0.5"
             >
-              Go to Setup
-            </a>
+              Get Started
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
           </div>
         </div>
       </div>
@@ -54,115 +68,259 @@ export default function Dashboard() {
 
   if (!stats) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <div className="text-xl text-gray-700">Calculating stats...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">Calculating stats...</p>
+        </div>
       </div>
     );
   }
 
   const { overall_stats, subject_stats } = stats;
 
-  // Determine overall status color
-  const getStatusColor = (percentage: number) => {
-    if (percentage >= 82) return 'green';
-    if (percentage >= 80) return 'yellow';
-    return 'red';
+  // Filter out library/seminar for display
+  const displayStats = subject_stats.filter((stat) => {
+    const subject = data.subjects.find(s => s.subject_code === stat.subject_code || s.subject_name === stat.subject_name);
+    return subject && subject.zero_credit_type !== 'library' && subject.zero_credit_type !== 'seminar';
+  });
+
+  // Count subjects by status
+  const safeCount = displayStats.filter(s => s.status === 'safe').length;
+  const warningCount = displayStats.filter(s => s.status === 'warning').length;
+  const dangerCount = displayStats.filter(s => s.status === 'danger').length;
+
+  // Determine overall status
+  const getOverallConfig = (percentage: number) => {
+    if (percentage >= 82) {
+      return {
+        gradient: 'from-emerald-500 to-green-600',
+        bg: 'bg-gradient-to-br from-emerald-500 to-green-600',
+        lightBg: 'bg-emerald-50',
+        text: 'text-emerald-600',
+        ring: 'ring-emerald-500/20',
+        label: 'Excellent',
+        emoji: '🎯',
+      };
+    }
+    if (percentage >= 80) {
+      return {
+        gradient: 'from-amber-500 to-yellow-600',
+        bg: 'bg-gradient-to-br from-amber-500 to-yellow-600',
+        lightBg: 'bg-amber-50',
+        text: 'text-amber-600',
+        ring: 'ring-amber-500/20',
+        label: 'Good',
+        emoji: '⚡',
+      };
+    }
+    return {
+      gradient: 'from-red-500 to-rose-600',
+      bg: 'bg-gradient-to-br from-red-500 to-rose-600',
+      lightBg: 'bg-red-50',
+      text: 'text-red-600',
+      ring: 'ring-red-500/20',
+      label: 'At Risk',
+      emoji: '⚠️',
+    };
   };
 
-  const statusColor = getStatusColor(overall_stats.percentage);
+  const overallConfig = getOverallConfig(overall_stats.percentage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Current semester: {data.semester_config.start_date} to {data.semester_config.end_date}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-gray-200/50">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+          </div>
+          
+          <div className="relative p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              
+              {/* Left: Main Percentage Display */}
+              <div className="flex items-center gap-6">
+                <div className={`relative w-32 h-32 ${overallConfig.bg} rounded-3xl shadow-2xl flex items-center justify-center`}>
+                  <div className="text-white text-center">
+                    <div className="text-4xl font-black">{overall_stats.percentage}%</div>
+                    <div className="text-sm font-medium opacity-90">{overallConfig.label}</div>
+                  </div>
+                  <div className="absolute -top-2 -right-2 text-2xl">{overallConfig.emoji}</div>
+                </div>
+                
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-1">Overall Attendance</h1>
+                  <p className="text-gray-500">
+                    {data.semester_config.start_date} → {data.semester_config.end_date}
+                  </p>
+                  <div className="flex gap-3 mt-3">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      {safeCount} Safe
+                    </span>
+                    {warningCount > 0 && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        {warningCount} Warning
+                      </span>
+                    )}
+                    {dangerCount > 0 && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                        {dangerCount} Critical
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-        {/* Overall Stats Card */}
-        <div
-          className={`rounded-lg border-2 p-8 ${
-            statusColor === 'green'
-              ? 'bg-green-50 border-green-300'
-              : statusColor === 'yellow'
-              ? 'bg-yellow-50 border-yellow-300'
-              : 'bg-red-50 border-red-300'
-          }`}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Overall Attendance</p>
-              <p
-                className={`text-5xl font-bold ${
-                  statusColor === 'green'
-                    ? 'text-green-700'
-                    : statusColor === 'yellow'
-                    ? 'text-yellow-700'
-                    : 'text-red-700'
-                }`}
+              {/* Right: Quick Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-gray-900">{overall_stats.total_sessions}</div>
+                  <div className="text-sm text-gray-500 mt-1">Total Sessions</div>
+                </div>
+                <div className="bg-emerald-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-emerald-600">{overall_stats.attended_sessions}</div>
+                  <div className="text-sm text-gray-500 mt-1">Attended</div>
+                </div>
+                <div className="bg-purple-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-purple-600">{overall_stats.od_hours_used}</div>
+                  <div className="text-sm text-gray-500 mt-1">OD Used</div>
+                </div>
+                <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-600">{overall_stats.od_hours_remaining}</div>
+                  <div className="text-sm text-gray-500 mt-1">OD Left</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-100">
+              <button
+                onClick={() => setShowChart(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-200 hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
-                {overall_stats.percentage}%
-              </p>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                View Charts
+              </button>
+              <Link
+                href="/attendance"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Log Attendance
+              </Link>
+              <Link
+                href="/planner"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Simulate Leave
+              </Link>
             </div>
-
-            <div className="bg-white/60 rounded-lg p-4">
-              <p className="text-gray-600 text-sm mb-1">Total Sessions</p>
-              <p className="text-3xl font-bold text-gray-800">
-                {overall_stats.total_sessions}
-              </p>
-            </div>
-
-            <div className="bg-white/60 rounded-lg p-4">
-              <p className="text-gray-600 text-sm mb-1">Attended</p>
-              <p className="text-3xl font-bold text-green-600">
-                {overall_stats.attended_sessions}
-              </p>
-            </div>
-
-            <div className="bg-white/60 rounded-lg p-4">
-              <p className="text-gray-600 text-sm mb-1">OD Hours Used</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {overall_stats.od_hours_used}
-              </p>
-            </div>
-
-            <div className="bg-white/60 rounded-lg p-4">
-              <p className="text-gray-600 text-sm mb-1">OD Hours Remaining</p>
-              <p className="text-3xl font-bold text-purple-600">
-                {overall_stats.od_hours_remaining}
-              </p>
-            </div>
-          </div>
-
-          {/* Thresholds Info */}
-          <div className="mt-6 pt-6 border-t border-gray-300/50">
-            <p className="text-xs text-gray-600">
-              ✓ Minimum 75% per subject | ✓ Minimum 80% overall | ⚠️ Warning at 77% subject / 82% overall
-            </p>
           </div>
         </div>
 
-        {/* Per-Subject Cards */}
+        {/* Subjects Section */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Per-Subject Attendance</h2>
-          <p className="text-gray-600 text-sm mb-6">Click on a subject to view detailed attendance history</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subject_stats
-              .filter((stat) => {
-                const subject = data.subjects.find(s => s.subject_code === stat.subject_code || s.subject_name === stat.subject_name);
-                return subject && subject.zero_credit_type !== 'library' && subject.zero_credit_type !== 'seminar';
-              })
-              .map((stat) => (
-                <DashboardCard
-                  key={stat.subject_code || stat.subject_name}
-                  stats={stat}
-                  onClick={() => setSelectedSubject(stat)}
-                />
-              ))
-            }
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Your Subjects</h2>
+              <p className="text-gray-500 mt-1">Click on any subject to view detailed attendance history</p>
+            </div>
+            <div className="text-sm text-gray-500">
+              {displayStats.length} subjects
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {displayStats.map((stat) => (
+              <DashboardCard
+                key={stat.subject_code || stat.subject_name}
+                stats={stat}
+                onClick={() => setSelectedSubject(stat)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <Link
+            href="/attendance"
+            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+          >
+            <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
+            <div className="relative">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Log Attendance</h3>
+              <p className="text-gray-500 text-sm">Mark today's attendance or update past records</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/planner"
+            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+          >
+            <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
+            <div className="relative">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Leave Simulator</h3>
+              <p className="text-gray-500 text-sm">Check impact of potential leave dates</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/planner"
+            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+          >
+            <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-emerald-500 to-green-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
+            <div className="relative">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Safe Margin</h3>
+              <p className="text-gray-500 text-sm">See how many sessions you can skip</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Threshold Info */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              ≥82% Overall = Safe
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              80-82% = Warning
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              &lt;80% = At Risk
+            </span>
+            <span className="border-l border-gray-300 pl-6">Min 75% per subject</span>
           </div>
         </div>
 
@@ -178,38 +336,13 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/attendance"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">📋 Log Attendance</h3>
-            <p className="text-gray-600 text-sm">
-              Mark today's attendance or update past records
-            </p>
-          </a>
-
-          <a
-            href="/planner"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">📅 Simulate Leave</h3>
-            <p className="text-gray-600 text-sm">
-              Check impact of potential leave dates
-            </p>
-          </a>
-
-          <a
-            href="/planner"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">⚡ Safe Margin</h3>
-            <p className="text-gray-600 text-sm">
-              See how many sessions you can skip
-            </p>
-          </a>
-        </div>
+        {/* Attendance Chart Modal */}
+        {showChart && (
+          <AttendanceChart
+            subjectStats={displayStats}
+            onClose={() => setShowChart(false)}
+          />
+        )}
       </div>
     </div>
   );

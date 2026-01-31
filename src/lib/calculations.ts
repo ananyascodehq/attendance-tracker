@@ -102,6 +102,9 @@ export const calculatePerSubjectAttendance = (
 ): {
   total_sessions: number;
   attended_sessions: number;
+  present_count: number;
+  absent_count: number;
+  od_count: number;
   percentage: number;
 } => {
   const upToDateObj = parseISO(upToDate);
@@ -134,6 +137,9 @@ export const calculatePerSubjectAttendance = (
   // - Present = either explicitly marked OR unmarked (default present)
   // So: attended = total - absent
   const attended = total - absentCount;
+  
+  // Present count = attended minus OD (since OD is tracked separately but also counts as attended)
+  const presentCount = attended - odCount;
 
   // SPEC 5.1: If TotalSessions = 0, attendance defaults to 100%
   const percentage = total === 0 ? 100 : Math.round((attended / total) * 100);
@@ -141,6 +147,9 @@ export const calculatePerSubjectAttendance = (
   return {
     total_sessions: total,
     attended_sessions: attended,
+    present_count: presentCount,
+    absent_count: absentCount,
+    od_count: odCount,
     percentage,
   };
 };
@@ -260,7 +269,7 @@ export const calculateSubjectStats = (
   upToDate: string,
   semesterConfig?: SemesterConfig | null
 ): AttendanceStats => {
-  const { total_sessions, attended_sessions, percentage } = calculatePerSubjectAttendance(
+  const { total_sessions, attended_sessions, present_count, absent_count, od_count, percentage } = calculatePerSubjectAttendance(
     subject.subject_code,
     timetable,
     attendance,
@@ -277,6 +286,9 @@ export const calculateSubjectStats = (
     credits: subject.credits,
     total_sessions,
     attended_sessions,
+    present_count,
+    absent_count,
+    od_count,
     percentage,
     status,
   };
