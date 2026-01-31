@@ -1,164 +1,91 @@
 'use client';
 
-import { useState } from 'react';
 import { useAttendanceData } from '@/hooks/useAttendanceData';
 import { LeaveSimulator } from '@/components/LeaveSimulator';
-import { Subject } from '@/types';
+import { OdTracker } from '@/components/OdTracker';
+import { SafeMarginCalculator } from '@/components/SafeMarginCalculator';
 
 export default function PlannerPage() {
-  const { data, updateData, isLoading } = useAttendanceData();
-  const [newSubject, setNewSubject] = useState({ code: '', name: '', credits: 3 as 3 | 4 });
-  const [semesterEndDate, setSemesterEndDate] = useState(data?.semester_end_date || '');
+  const { data, loading } = useAttendanceData();
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <div className="text-xl text-gray-700">Loading...</div>
+      </div>
+    );
   }
 
   if (!data) {
-    return <div className="text-center">No data found</div>;
+    return <div className="text-center text-gray-700">No data found</div>;
   }
 
-  const handleAddSubject = () => {
-    if (newSubject.code && newSubject.name) {
-      const subject: Subject = {
-        subject_code: newSubject.code,
-        subject_name: newSubject.name,
-        credits: newSubject.credits,
-      };
-
-      updateData({
-        ...data,
-        subjects: [...data.subjects, subject],
-      });
-
-      setNewSubject({ code: '', name: '', credits: 3 });
-    }
-  };
-
-  const handleSetSemesterEnd = () => {
-    updateData({
-      ...data,
-      semester_end_date: semesterEndDate,
-    });
-  };
-
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Planner & Setup</h1>
-        <p className="text-gray-600">Configure your semester details and timetable</p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900">Planning & Tools</h1>
+          <p className="text-gray-600 mt-2">Simulate leave impact and check your safe margin</p>
+        </div>
 
-      {/* Semester Setup */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Semester Configuration</h2>
-        <div className="space-y-4">
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Leave Simulator */}
           <div>
-            <label className="block text-sm font-medium mb-2">Semester End Date</label>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={semesterEndDate}
-                onChange={(e) => setSemesterEndDate(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
-              />
-              <button
-                onClick={handleSetSemesterEnd}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Save
-              </button>
+            <LeaveSimulator />
+          </div>
+
+          {/* Right Column - Tools */}
+          <div className="space-y-8">
+            <OdTracker />
+            <SafeMarginCalculator />
+          </div>
+        </div>
+
+        {/* Semester Info */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Current Semester</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-700 font-semibold mb-1">START DATE</p>
+              <p className="text-lg font-bold text-blue-900">
+                {data.semester_config.start_date || 'Not set'}
+              </p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-700 font-semibold mb-1">END DATE</p>
+              <p className="text-lg font-bold text-blue-900">
+                {data.semester_config.end_date || 'Not set'}
+              </p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-700 font-semibold mb-1">LAST INSTRUCTION</p>
+              <p className="text-lg font-bold text-blue-900">
+                {data.semester_config.last_instruction_date || 'Not set'}
+              </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Subject Setup */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Add Subjects</h2>
-
-        <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Subject Code</label>
-            <input
-              type="text"
-              value={newSubject.code}
-              onChange={(e) => setNewSubject({ ...newSubject, code: e.target.value })}
-              placeholder="e.g., CS101"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2"
-            />
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm font-medium mb-1">Subjects</p>
+            <p className="text-4xl font-bold text-gray-900">{data.subjects.length}</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Subject Name</label>
-            <input
-              type="text"
-              value={newSubject.name}
-              onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
-              placeholder="e.g., Data Structures"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2"
-            />
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm font-medium mb-1">Timetable Slots</p>
+            <p className="text-4xl font-bold text-gray-900">{data.timetable.length}</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Credits</label>
-            <select
-              value={newSubject.credits}
-              onChange={(e) =>
-                setNewSubject({ ...newSubject, credits: parseInt(e.target.value) as 3 | 4 })
-              }
-              className="w-full border border-gray-300 rounded-lg px-4 py-2"
-            >
-              <option value={3}>3</option>
-              <option value={4}>4</option>
-            </select>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm font-medium mb-1">Holidays</p>
+            <p className="text-4xl font-bold text-gray-900">{data.holidays.length}</p>
           </div>
-
-          <button
-            onClick={handleAddSubject}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Add Subject
-          </button>
         </div>
-
-        {data.subjects.length > 0 && (
-          <div>
-            <h3 className="text-lg font-medium mb-3">Added Subjects</h3>
-            <div className="space-y-2">
-              {data.subjects.map((subject) => (
-                <div
-                  key={subject.subject_code}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{subject.subject_name}</p>
-                    <p className="text-xs text-gray-500">{subject.subject_code}</p>
-                  </div>
-                  <span className="text-sm text-gray-600">{subject.credits} credits</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Planning Tools */}
-      {data.subjects.length > 0 && (
-        <LeaveSimulator
-          stats={data.subjects.map((s) => ({
-            subject_code: s.subject_code,
-            subject_name: s.subject_name,
-            credits: s.credits,
-            total_classes: 35,
-            present: 28,
-            absent: 5,
-            od: 2,
-            percentage: 86,
-            status: 'safe' as const,
-          }))}
-        />
-      )}
     </div>
   );
 }
