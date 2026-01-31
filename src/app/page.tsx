@@ -26,10 +26,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 to-blue-50 dark:to-gray-800 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -37,18 +37,18 @@ export default function Dashboard() {
 
   if (!data || data.subjects.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 via-blue-50 dark:via-gray-900 to-indigo-100 dark:to-gray-800 flex items-center justify-center p-6">
         <div className="max-w-lg w-full">
-          <div className="bg-white rounded-3xl shadow-2xl shadow-blue-100 p-10 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl shadow-blue-100 dark:shadow-gray-900 p-10 text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Welcome to AttendanceTracker
             </h2>
-            <p className="text-gray-600 mb-8 text-lg">
+            <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg">
               Set up your semester, subjects, and timetable to start tracking your attendance.
             </p>
             <Link
@@ -68,10 +68,10 @@ export default function Dashboard() {
 
   if (!stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 to-blue-50 dark:to-gray-800 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 font-medium">Calculating stats...</p>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Calculating stats...</p>
         </div>
       </div>
     );
@@ -128,11 +128,11 @@ export default function Dashboard() {
   const overallConfig = getOverallConfig(overall_stats.percentage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 via-gray-50 dark:via-gray-900 to-blue-50 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-gray-200/50">
+        <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
@@ -152,23 +152,23 @@ export default function Dashboard() {
                 </div>
                 
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-1">Overall Attendance</h1>
-                  <p className="text-gray-500">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Overall Attendance</h1>
+                  <p className="text-gray-500 dark:text-gray-400">
                     {data.semester_config.start_date} → {data.semester_config.end_date}
                   </p>
                   <div className="flex gap-3 mt-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                       {safeCount} Safe
                     </span>
                     {warningCount > 0 && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-medium">
                         <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                         {warningCount} Warning
                       </span>
                     )}
                     {dangerCount > 0 && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm font-medium">
                         <span className="w-2 h-2 rounded-full bg-red-500"></span>
                         {dangerCount} Critical
                       </span>
@@ -179,30 +179,30 @@ export default function Dashboard() {
 
               {/* Right: Quick Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900">{overall_stats.total_sessions}</div>
-                  <div className="text-sm text-gray-500 mt-1">Total Sessions</div>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{overall_stats.total_sessions}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Sessions</div>
                 </div>
-                <div className="bg-emerald-50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">{overall_stats.attended_sessions}</div>
-                  <div className="text-sm text-gray-500 mt-1">Attended</div>
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{overall_stats.attended_sessions}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Attended</div>
                 </div>
-                <div className="bg-purple-50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">{overall_stats.od_hours_used}</div>
-                  <div className="text-sm text-gray-500 mt-1">OD Used</div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{overall_stats.od_hours_used}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">OD Used</div>
                 </div>
-                <div className="bg-blue-50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">{overall_stats.od_hours_remaining}</div>
-                  <div className="text-sm text-gray-500 mt-1">OD Left</div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{overall_stats.od_hours_remaining}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">OD Left</div>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-100">
+            <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
               <button
                 onClick={() => setShowChart(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-200 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-200 dark:shadow-blue-900/30 hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -211,18 +211,18 @@ export default function Dashboard() {
               </button>
               <Link
                 href="/attendance"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 Log Attendance
               </Link>
               <Link
                 href="/planner"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Simulate Leave
@@ -235,10 +235,10 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Your Subjects</h2>
-              <p className="text-gray-500 mt-1">Click on any subject to view detailed attendance history</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Subjects</h2>
+              <p className="text-gray-500 dark:text-gray-400 mt-1">Click on any subject to view detailed attendance history</p>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {displayStats.length} subjects
             </div>
           </div>
@@ -258,56 +258,56 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Link
             href="/attendance"
-            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+            className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-gray-100 dark:shadow-gray-900/50 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
           >
             <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Log Attendance</h3>
-              <p className="text-gray-500 text-sm">Mark today's attendance or update past records</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Log Attendance</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Mark today's attendance or update past records</p>
             </div>
           </Link>
 
           <Link
             href="/planner"
-            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+            className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-gray-100 dark:shadow-gray-900/50 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
           >
             <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Leave Simulator</h3>
-              <p className="text-gray-500 text-sm">Check impact of potential leave dates</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Leave Simulator</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Check impact of potential leave dates</p>
             </div>
           </Link>
 
           <Link
             href="/planner"
-            className="group relative overflow-hidden bg-white rounded-2xl shadow-lg shadow-gray-100 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
+            className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-gray-100 dark:shadow-gray-900/50 p-6 hover:shadow-xl transition-all hover:-translate-y-1"
           >
             <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-emerald-500 to-green-600 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Safe Margin</h3>
-              <p className="text-gray-500 text-sm">See how many sessions you can skip</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Safe Margin</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">See how many sessions you can skip</p>
             </div>
           </Link>
         </div>
 
         {/* Threshold Info */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+        <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               ≥82% Overall = Safe
@@ -320,7 +320,7 @@ export default function Dashboard() {
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
               &lt;80% = At Risk
             </span>
-            <span className="border-l border-gray-300 pl-6">Min 75% per subject</span>
+            <span className="border-l border-gray-300 dark:border-gray-600 pl-6">Min 75% per subject</span>
           </div>
         </div>
 

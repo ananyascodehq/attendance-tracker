@@ -103,39 +103,30 @@ export default function SemesterConfigManager({
   return (
     <div className="space-y-6">
       {/* Semester Configuration */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Semester Configuration</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Semester Configuration</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Semester Start Date</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Semester Start Date</label>
             <input
               type="date"
               value={config.start_date}
               onChange={(e) => handleConfigChange('start_date', e.target.value)}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Semester End Date</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Semester End Date</label>
             <input
               type="date"
               value={config.end_date}
               onChange={(e) => handleConfigChange('end_date', e.target.value)}
-              className="border rounded px-3 py-2 w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Last Instruction Date</label>
-            <input
-              type="date"
-              value={config.last_instruction_date}
-              onChange={(e) => handleConfigChange('last_instruction_date', e.target.value)}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             />
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded text-sm text-blue-800">
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded text-sm text-blue-800 dark:text-blue-300">
           <strong>Semester Duration:</strong> {formatDate(config.start_date)} to{' '}
           {formatDate(config.end_date)} (
           {Math.ceil(
@@ -147,27 +138,27 @@ export default function SemesterConfigManager({
       </div>
 
       {/* Holidays Management */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Holidays</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Holidays</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Date</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Date</label>
             <input
               type="date"
               value={newHoliday.date}
               onChange={(e) => setNewHoliday({ ...newHoliday, date: e.target.value })}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Description</label>
             <input
               type="text"
               placeholder="e.g., Republic Day"
               value={newHoliday.description}
               onChange={(e) => setNewHoliday({ ...newHoliday, description: e.target.value })}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div className="flex items-end">
@@ -181,7 +172,7 @@ export default function SemesterConfigManager({
         </div>
 
         {holidays.length === 0 ? (
-          <p className="text-gray-500 text-sm italic">No holidays added yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm italic">No holidays added yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {holidays
@@ -189,15 +180,15 @@ export default function SemesterConfigManager({
               .map((holiday) => (
                 <div
                   key={holiday.date}
-                  className="flex items-center justify-between bg-gray-50 p-3 rounded border"
+                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded border border-gray-200 dark:border-gray-700"
                 >
                   <div>
-                    <div className="font-medium text-sm">{holiday.description}</div>
-                    <div className="text-xs text-gray-500">{formatDate(holiday.date)}</div>
+                    <div className="font-medium text-sm text-gray-900 dark:text-white">{holiday.description}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(holiday.date)}</div>
                   </div>
                   <button
                     onClick={() => deleteHoliday(holiday.date)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
                   >
                     Remove
                   </button>
@@ -208,19 +199,19 @@ export default function SemesterConfigManager({
       </div>
 
       {/* CAT Exam Periods */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">📝 CAT Exam Periods</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📝 CAT Exam Periods</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           Add CAT exam periods to exclude them from attendance calculations (no classes during exams).
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium mb-2">CAT Name</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">CAT Name</label>
             <select
               value={newCAT.name}
               onChange={(e) => setNewCAT({ ...newCAT, name: e.target.value })}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             >
               <option value="">Select CAT</option>
               <option value="CAT 1">CAT 1</option>
@@ -229,21 +220,21 @@ export default function SemesterConfigManager({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Start Date</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Start Date</label>
             <input
               type="date"
               value={newCAT.start_date}
               onChange={(e) => setNewCAT({ ...newCAT, start_date: e.target.value })}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">End Date</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">End Date</label>
             <input
               type="date"
               value={newCAT.end_date}
               onChange={(e) => setNewCAT({ ...newCAT, end_date: e.target.value })}
-              className="border rounded px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-full dark:bg-gray-900 dark:text-white"
             />
           </div>
           <div className="flex items-end">
@@ -257,7 +248,7 @@ export default function SemesterConfigManager({
         </div>
 
         {(!config.cat_periods || config.cat_periods.length === 0) ? (
-          <p className="text-gray-500 text-sm italic">No CAT periods added yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm italic">No CAT periods added yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {config.cat_periods
@@ -265,17 +256,17 @@ export default function SemesterConfigManager({
               .map((cat) => (
                 <div
                   key={cat.id}
-                  className="flex items-center justify-between bg-purple-50 p-3 rounded border border-purple-200"
+                  className="flex items-center justify-between bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-700"
                 >
                   <div>
-                    <div className="font-medium text-sm text-purple-900">{cat.name}</div>
-                    <div className="text-xs text-purple-700">
+                    <div className="font-medium text-sm text-purple-900 dark:text-purple-300">{cat.name}</div>
+                    <div className="text-xs text-purple-700 dark:text-purple-400">
                       {formatDate(cat.start_date)} - {formatDate(cat.end_date)} ({calculateDays(cat.start_date, cat.end_date)} days)
                     </div>
                   </div>
                   <button
                     onClick={() => deleteCATPeriod(cat.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
                   >
                     Remove
                   </button>
@@ -285,7 +276,7 @@ export default function SemesterConfigManager({
         )}
       </div>
 
-      <div className="bg-amber-50 rounded-lg p-4 text-sm text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-4 text-sm text-amber-800 dark:text-amber-300">
         ⚠️ <strong>Note:</strong> Holidays and CAT periods exclude those days from the denominator in attendance
         calculations. Sundays are automatically excluded.
       </div>

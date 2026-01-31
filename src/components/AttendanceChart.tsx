@@ -72,17 +72,17 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-semibold text-gray-900">{data.fullName || data.name}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <p className="font-semibold text-gray-900 dark:text-white">{data.fullName || data.name}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Attendance: <span className="font-medium">{data.percentage?.toFixed(1)}%</span>
           </p>
           {data.present !== undefined && (
             <>
-              <p className="text-sm text-green-600">Present: {data.present}</p>
-              <p className="text-sm text-purple-600">OD: {data.od}</p>
-              <p className="text-sm text-red-600">Absent: {data.absent}</p>
-              <p className="text-sm text-gray-500">Total: {data.total}</p>
+              <p className="text-sm text-green-600 dark:text-green-400">Present: {data.present}</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">OD: {data.od}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">Absent: {data.absent}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total: {data.total}</p>
             </>
           )}
         </div>
@@ -93,31 +93,31 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Attendance Analytics</h2>
-            <p className="text-gray-600 text-sm mt-1">Visual breakdown of your attendance</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance Analytics</h2>
+            <p className="text-gray-600 dark:text-gray-300 text-sm mt-1">Visual breakdown of your attendance</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Chart Type Selector */}
-        <div className="flex gap-2 p-4 border-b border-gray-100 bg-gray-50">
+        <div className="flex gap-2 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={() => setChartType('bar')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               chartType === 'bar'
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               chartType === 'pie'
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               chartType === 'radial'
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
         <div className="p-6 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
           {chartType === 'bar' && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance by Subject</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Attendance by Subject</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
@@ -191,19 +191,19 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
               <div className="flex justify-center gap-6 mt-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-gray-600">≥82% (Safe)</span>
+                  <span className="text-gray-600 dark:text-gray-300">≥82% (Safe)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <span className="text-gray-600">80-82% (Warning)</span>
+                  <span className="text-gray-600 dark:text-gray-300">80-82% (Warning)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-gray-600">75-80% (Low)</span>
+                  <span className="text-gray-600 dark:text-gray-300">75-80% (Low)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-gray-600">&lt;75% (Critical)</span>
+                  <span className="text-gray-600 dark:text-gray-300">&lt;75% (Critical)</span>
                 </div>
               </div>
             </div>
@@ -212,7 +212,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
           {chartType === 'pie' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Overall Breakdown</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">Overall Breakdown</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -238,23 +238,23 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Statistics</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">Statistics</h3>
                 <div className="space-y-4 p-4">
-                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span className="text-green-700 font-medium">Present</span>
-                    <span className="text-2xl font-bold text-green-600">{totalPresent}</span>
+                  <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                    <span className="text-green-700 dark:text-green-400 font-medium">Present</span>
+                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">{totalPresent}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                    <span className="text-purple-700 font-medium">OD (On Duty)</span>
-                    <span className="text-2xl font-bold text-purple-600">{totalOD}</span>
+                  <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                    <span className="text-purple-700 dark:text-purple-400 font-medium">OD (On Duty)</span>
+                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalOD}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                    <span className="text-red-700 font-medium">Absent</span>
-                    <span className="text-2xl font-bold text-red-600">{totalAbsent}</span>
+                  <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                    <span className="text-red-700 dark:text-red-400 font-medium">Absent</span>
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">{totalAbsent}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-t-2 border-gray-200">
-                    <span className="text-gray-700 font-medium">Total Sessions</span>
-                    <span className="text-2xl font-bold text-gray-600">{totalPresent + totalOD + totalAbsent}</span>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border-t-2 border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-700 dark:text-gray-200 font-medium">Total Sessions</span>
+                    <span className="text-2xl font-bold text-gray-600 dark:text-gray-300">{totalPresent + totalOD + totalAbsent}</span>
                   </div>
                 </div>
               </div>
@@ -263,7 +263,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
 
           {chartType === 'radial' && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Subject Performance Ranking</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Subject Performance Ranking</h3>
               <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart
@@ -305,7 +305,7 @@ export function AttendanceChart({ subjectStats, onClose }: AttendanceChartProps)
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: item.fill }}
                     ></div>
-                    <span className="text-sm text-gray-700 truncate" title={item.fullName}>
+                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate" title={item.fullName}>
                       {item.name}: {item.percentage.toFixed(1)}%
                     </span>
                   </div>

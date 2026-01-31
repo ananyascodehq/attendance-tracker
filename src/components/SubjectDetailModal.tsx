@@ -134,23 +134,23 @@ export const SubjectDetailModal = ({
 
   const statusConfig = {
     present: {
-      bg: 'bg-green-100',
-      text: 'text-green-800',
-      border: 'border-green-300',
+      bg: 'bg-green-100 dark:bg-green-900/30',
+      text: 'text-green-800 dark:text-green-300',
+      border: 'border-green-300 dark:border-green-700',
       icon: '✓',
       label: 'Present',
     },
     absent: {
-      bg: 'bg-red-100',
-      text: 'text-red-800',
-      border: 'border-red-300',
+      bg: 'bg-red-100 dark:bg-red-900/30',
+      text: 'text-red-800 dark:text-red-300',
+      border: 'border-red-300 dark:border-red-700',
       icon: '✗',
       label: 'Absent',
     },
     od: {
-      bg: 'bg-purple-100',
-      text: 'text-purple-800',
-      border: 'border-purple-300',
+      bg: 'bg-purple-100 dark:bg-purple-900/30',
+      text: 'text-purple-800 dark:text-purple-300',
+      border: 'border-purple-300 dark:border-purple-700',
       icon: '⚡',
       label: 'OD',
     },
@@ -158,17 +158,17 @@ export const SubjectDetailModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{stats.subject_name}</h2>
-              <p className="text-gray-600">{stats.subject_code || 'No code'}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{stats.subject_name}</h2>
+              <p className="text-gray-600 dark:text-gray-300">{stats.subject_code || 'No code'}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold"
             >
               ×
             </button>
@@ -176,33 +176,33 @@ export const SubjectDetailModal = ({
 
           {/* Summary Stats */}
           <div className="mt-4 grid grid-cols-4 gap-3">
-            <div className="bg-blue-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-blue-700">{stats.percentage}%</p>
-              <p className="text-xs text-blue-600">Attendance</p>
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.percentage}%</p>
+              <p className="text-xs text-blue-600 dark:text-blue-300">Attendance</p>
             </div>
-            <div className="bg-green-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-green-700">{statusCounts.present}</p>
-              <p className="text-xs text-green-600">Present</p>
+            <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.present}</p>
+              <p className="text-xs text-green-600 dark:text-green-300">Present</p>
             </div>
-            <div className="bg-red-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-red-700">{statusCounts.absent}</p>
-              <p className="text-xs text-red-600">Absent</p>
+            <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.absent}</p>
+              <p className="text-xs text-red-600 dark:text-red-300">Absent</p>
             </div>
-            <div className="bg-purple-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-purple-700">{statusCounts.od}</p>
-              <p className="text-xs text-purple-600">OD</p>
+            <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{statusCounts.od}</p>
+              <p className="text-xs text-purple-600 dark:text-purple-300">OD</p>
             </div>
           </div>
         </div>
 
         {/* Class Records List */}
         <div className="flex-1 overflow-y-auto p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             All Classes ({classRecords.length} total)
           </h3>
 
           {classRecords.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No classes recorded yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No classes recorded yet</p>
           ) : (
             <div className="space-y-2">
               {classRecords.map((record, index) => {
@@ -214,12 +214,12 @@ export const SubjectDetailModal = ({
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-center min-w-[80px]">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-gray-900 dark:text-white">
                           {format(parseISO(record.date), 'MMM d')}
                         </p>
-                        <p className="text-xs text-gray-600">{record.dayName}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{record.dayName}</p>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
                         <span className="font-medium">Period {record.periodNumber}</span>
                         <span className="mx-2">•</span>
                         <span>{record.startTime} - {record.endTime}</span>
@@ -239,10 +239,10 @@ export const SubjectDetailModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={onClose}
-            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition-colors"
+            className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold py-2 rounded-lg transition-colors"
           >
             Close
           </button>
