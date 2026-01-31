@@ -1,19 +1,20 @@
 export interface Subject {
   subject_code: string;
   subject_name: string;
-  credits: 3 | 4;
+  credits: 0 | 1.5 | 3 | 4;
 }
 
 export interface TimetableSlot {
   id: string;
-  day_of_week: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  day_of_week: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
   period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   subject_code: string;
-  start_time: string;
-  end_time: string;
+  start_time: string; // HH:mm
+  end_time: string; // HH:mm
+  duration_hours?: number; // Optional, defaults to 1.0 if missing per spec
 }
 
-export type AttendanceStatus = 'present' | 'absent' | 'od';
+export type AttendanceStatus = 'present' | 'od' | 'leave';
 
 export interface AttendanceLog {
   id: string;
@@ -24,18 +25,26 @@ export interface AttendanceLog {
   notes?: string;
 }
 
+export interface SemesterConfig {
+  start_date: string; // ISO date
+  end_date: string; // ISO date
+  last_instruction_date: string; // ISO date
+}
+
 export interface Holiday {
   date: string;
   description: string;
 }
 
-export type ODApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type ODApprovalStatus = 'approved'; // All ODs auto-approved per spec
 
 export interface ODLog {
   id: string;
   date: string;
+  period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  subject_code: string;
   hours_used: number;
-  reason: string;
+  reason?: string;
   approval_status: ODApprovalStatus;
 }
 
@@ -44,27 +53,24 @@ export interface AppData {
   timetable: TimetableSlot[];
   attendance: AttendanceLog[];
   holidays: Holiday[];
-  od_logs: ODLog[];
-  semester_end_date: string;
+  semester_config: SemesterConfig;
 }
 
 export interface AttendanceStats {
   subject_code: string;
   subject_name: string;
   credits: 3 | 4;
-  total_classes: number;
-  present: number;
-  absent: number;
-  od: number;
+  total_sessions: number;
+  attended_sessions: number;
   percentage: number;
-  status: 'safe' | 'caution' | 'danger';
+  status: 'safe' | 'warning' | 'danger';
 }
 
 export interface OverallStats {
-  total_classes: number;
-  present: number;
-  absent: number;
-  od: number;
+  total_sessions: number;
+  attended_sessions: number;
   percentage: number;
-  status: 'safe' | 'caution' | 'danger';
+  status: 'safe' | 'warning' | 'danger';
+  od_hours_used: number;
+  od_hours_remaining: number;
 }
