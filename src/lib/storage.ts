@@ -1,5 +1,6 @@
 import { AppData } from '@/types';
 import { STORAGE_KEYS } from './constants';
+import { initializeSampleData } from './sampleData';
 
 const getStorage = (): Storage | null => {
   if (typeof window !== 'undefined') {
@@ -20,8 +21,9 @@ export const loadAppData = (): AppData => {
     timetable: JSON.parse(storage.getItem(STORAGE_KEYS.TIMETABLE) || '[]'),
     attendance: JSON.parse(storage.getItem(STORAGE_KEYS.ATTENDANCE) || '[]'),
     holidays: JSON.parse(storage.getItem(STORAGE_KEYS.HOLIDAYS) || '[]'),
-    od_logs: JSON.parse(storage.getItem(STORAGE_KEYS.OD_LOGS) || '[]'),
-    semester_end_date: storage.getItem(STORAGE_KEYS.SEMESTER_END_DATE) || '',
+    semester_config: JSON.parse(
+      storage.getItem(STORAGE_KEYS.SEMESTER_CONFIG) || '{"start_date":"","end_date":"","last_instruction_date":""}'
+    ),
   };
 };
 
@@ -34,8 +36,7 @@ export const saveAppData = (data: AppData): void => {
   storage.setItem(STORAGE_KEYS.TIMETABLE, JSON.stringify(data.timetable));
   storage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(data.attendance));
   storage.setItem(STORAGE_KEYS.HOLIDAYS, JSON.stringify(data.holidays));
-  storage.setItem(STORAGE_KEYS.OD_LOGS, JSON.stringify(data.od_logs));
-  storage.setItem(STORAGE_KEYS.SEMESTER_END_DATE, data.semester_end_date);
+  storage.setItem(STORAGE_KEYS.SEMESTER_CONFIG, JSON.stringify(data.semester_config));
 };
 
 export const exportData = (data: AppData): string => {
@@ -47,12 +48,5 @@ export const importData = (jsonString: string): AppData => {
 };
 
 export const getDefaultAppData = (): AppData => {
-  return {
-    subjects: [],
-    timetable: [],
-    attendance: [],
-    holidays: [],
-    od_logs: [],
-    semester_end_date: '',
-  };
+  return initializeSampleData();
 };
