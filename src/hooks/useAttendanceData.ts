@@ -135,13 +135,14 @@ export const useAttendanceData = () => {
   // Get safe margin for a subject
   const getSafeMargin = useCallback(
     (subjectCode: string) => {
-      if (!data || !data.semester_config.last_instruction_date) return null;
+      if (!data || !data.semester_config.end_date) return null;
       return calculateSafeMargin(
         subjectCode,
         data.timetable,
         data.attendance,
         data.holidays,
-        data.semester_config
+        data.semester_config,
+        data.subjects
       );
     },
     [data]
@@ -175,11 +176,17 @@ export const useAttendanceData = () => {
         return false;
       };
 
-      // Add leave entries for each ACTUAL SCHEDULED PERIOD in the date range
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const leaveStart = new Date(startDate);
+      const leaveEnd = new Date(endDate);
 
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      // Step 1: For days between today and leave start, assume PRESENT (no new entries needed)
+      // Since default is present, we don't need to add anything for those days
+      // The key is to calculate stats UP TO the leave end date, not just today
+
+      // Step 2: Add leave entries for the actual leave dates
+      for (let date = new Date(leaveStart); date <= leaveEnd; date.setDate(date.getDate() + 1)) {
         const dateStr = date.toISOString().split('T')[0];
         const dayName = dayNames[date.getDay()];
 
@@ -210,13 +217,17 @@ export const useAttendanceData = () => {
         }
       }
 
-      // Calculate stats with simulated data
+      // Step 3: Calculate stats UP TO THE LEAVE END DATE
+      // This accounts for:
+      // - Past attendance (already logged)
+      // - Days between today and leave start (default present, so no entries = present)
+      // - Leave days (we just added as 'leave')
       return calculateOverallStats(
         data.subjects,
         data.timetable,
         simulatedAttendance,
         data.holidays,
-        new Date().toISOString().split('T')[0],
+        endDate, // Use leave end date instead of today!
         data.semester_config
       );
     },
