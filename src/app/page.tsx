@@ -2,6 +2,7 @@
 
 import { useAttendanceData } from '@/hooks/useAttendanceData';
 import { DashboardCard } from '@/components/DashboardCard';
+import { SubjectDetailModal } from '@/components/SubjectDetailModal';
 import { useEffect, useState } from 'react';
 import { OverallStats, AttendanceStats } from '@/types';
 
@@ -11,6 +12,7 @@ export default function Dashboard() {
     overall_stats: OverallStats;
     subject_stats: AttendanceStats[];
   } | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<AttendanceStats | null>(null);
 
   useEffect(() => {
     if (data && !loading) {
@@ -145,7 +147,8 @@ export default function Dashboard() {
 
         {/* Per-Subject Cards */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Per-Subject Attendance</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Per-Subject Attendance</h2>
+          <p className="text-gray-600 text-sm mb-6">Click on a subject to view detailed attendance history</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {subject_stats
               .filter((stat) => {
@@ -153,11 +156,27 @@ export default function Dashboard() {
                 return subject && subject.zero_credit_type !== 'library' && subject.zero_credit_type !== 'seminar';
               })
               .map((stat) => (
-                <DashboardCard key={stat.subject_code || stat.subject_name} stats={stat} />
+                <DashboardCard
+                  key={stat.subject_code || stat.subject_name}
+                  stats={stat}
+                  onClick={() => setSelectedSubject(stat)}
+                />
               ))
             }
           </div>
         </div>
+
+        {/* Subject Detail Modal */}
+        {selectedSubject && (
+          <SubjectDetailModal
+            stats={selectedSubject}
+            timetable={data.timetable}
+            attendance={data.attendance}
+            holidays={data.holidays}
+            semesterConfig={data.semester_config}
+            onClose={() => setSelectedSubject(null)}
+          />
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

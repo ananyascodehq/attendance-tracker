@@ -4,9 +4,10 @@ import { AttendanceStats } from '@/types';
 
 interface DashboardCardProps {
   stats: AttendanceStats;
+  onClick?: () => void;
 }
 
-export const DashboardCard = ({ stats }: DashboardCardProps) => {
+export const DashboardCard = ({ stats, onClick }: DashboardCardProps) => {
   const statusColors = {
     safe: 'bg-green-50 border-green-300',
     warning: 'bg-yellow-50 border-yellow-300',
@@ -27,7 +28,8 @@ export const DashboardCard = ({ stats }: DashboardCardProps) => {
 
   return (
     <div
-      className={`rounded-lg border-2 p-4 transition-all ${statusColors[stats.status]}`}
+      onClick={onClick}
+      className={`rounded-lg border-2 p-4 transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] ${statusColors[stats.status]}`}
     >
       <div className="flex justify-between items-start mb-3">
         <div>

@@ -6,9 +6,10 @@ import { TimetableSlot, AttendanceStatus } from '@/types';
 interface AttendanceLoggerProps {
   date: string;
   timetable: TimetableSlot[];
-  onLogAttendance: (period: number, subject: string, status: AttendanceStatus) => void;
-  onDeleteAttendance: (period: number, subject: string) => void;
+  onLogAttendance: (period: number, subject: string | undefined, status: AttendanceStatus) => void;
+  onDeleteAttendance: (period: number, subject: string | undefined) => void;
   existingLogs: Map<string, AttendanceStatus>; // key: "period-subject"
+  onSave?: () => void;
 }
 
 export const AttendanceLogger = ({
@@ -17,8 +18,11 @@ export const AttendanceLogger = ({
   onLogAttendance,
   onDeleteAttendance,
   existingLogs,
+  onSave,
 }: AttendanceLoggerProps) => {
   const [selectedStatus, setSelectedStatus] = useState<AttendanceStatus | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
 
   // Get day name for the date
   const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
@@ -32,7 +36,7 @@ export const AttendanceLogger = ({
     [timetable, dayName]
   );
 
-  const handleStatusClick = (period: number, subject: string, status: AttendanceStatus) => {
+  const handleStatusClick = (period: number, subject: string | undefined, status: AttendanceStatus) => {
     const key = `${period}-${subject}`;
     const current = existingLogs.get(key);
 
@@ -46,13 +50,17 @@ export const AttendanceLogger = ({
     }
   };
 
-  const handleMarkDayAsLeave = () => {
-    const subjects = Array.from(new Set(todaySlots.map((s) => s.subject_code)));
-    subjects.forEach((subject) => {
-      const slot = todaySlots.find((s) => s.subject_code === subject);
-      if (slot) {
-        onLogAttendance(slot.period_number, subject, 'leave');
-      }
+  const handleMarkDayAsAbsent = () => {
+    // Mark ALL periods as leave, not just one per subject
+    todaySlots.forEach((slot) => {
+      onLogAttendance(slot.period_number, slot.subject_code, 'leave');
+    });
+  };
+
+  const handleMarkDayAsOD = () => {
+    // Mark ALL periods as OD
+    todaySlots.forEach((slot) => {
+      onLogAttendance(slot.period_number, slot.subject_code, 'od');
     });
   };
 
@@ -65,13 +73,55 @@ export const AttendanceLogger = ({
             {date} ({dayName})
           </p>
         </div>
-        <button
-          onClick={handleMarkDayAsLeave}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium"
-          disabled={todaySlots.length === 0}
-        >
-          Mark Full Day as Leave
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleMarkDayAsAbsent}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium"
+            disabled={todaySlots.length === 0}
+          >
+            Full Day Absent
+          </button>
+          <button
+            onClick={handleMarkDayAsOD}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium"
+            disabled={todaySlots.length === 0}
+          >
+            Full Day OD
+          </button>
+          <button
+            onClick={() => {
+              setIsSaving(true);
+              setTimeout(() => {
+                onSave?.();
+                setIsSaving(false);
+                setShowSaved(true);
+                setTimeout(() => setShowSaved(false), 2000);
+              }, 500);
+            }}
+            disabled={isSaving}
+            className={`px-4 py-2 rounded-lg font-medium transition-all min-w-[100px] flex items-center justify-center gap-2 ${
+              showSaved
+                ? 'bg-green-500 text-white'
+                : isSaving
+                ? 'bg-blue-400 text-white cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : showSaved ? (
+              '✓ Saved!'
+            ) : (
+              '💾 Save'
+            )}
+          </button>
+        </div>
       </div>
 
       {todaySlots.length === 0 ? (
@@ -103,20 +153,6 @@ export const AttendanceLogger = ({
                   <div className="flex gap-2">
                     <button
                       onClick={() =>
-                        handleStatusClick(slot.period_number, slot.subject_code, 'present')
-                      }
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        currentStatus === 'present'
-                          ? 'bg-green-500 text-white shadow-lg'
-                          : 'bg-gray-100 text-gray-700 hover:bg-green-100'
-                      }`}
-                      title="Mark as Present (default)"
-                    >
-                      ✓ Present
-                    </button>
-
-                    <button
-                      onClick={() =>
                         handleStatusClick(slot.period_number, slot.subject_code, 'leave')
                       }
                       className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -124,9 +160,9 @@ export const AttendanceLogger = ({
                           ? 'bg-yellow-500 text-white shadow-lg'
                           : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
                       }`}
-                      title="Mark as Leave"
+                      title="Mark as Absent"
                     >
-                      ✗ Leave
+                      ✗ Absent
                     </button>
 
                     <button
@@ -148,10 +184,10 @@ export const AttendanceLogger = ({
                         onClick={() =>
                           onDeleteAttendance(slot.period_number, slot.subject_code)
                         }
-                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                        title="Clear mark"
+                        className="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                        title="Reset to Present (default)"
                       >
-                        Clear
+                        ✓ Reset
                       </button>
                     )}
                   </div>
@@ -165,9 +201,10 @@ export const AttendanceLogger = ({
       <div className="mt-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
         <p className="font-semibold mb-2">How it works:</p>
         <ul className="space-y-1 text-xs">
-          <li>✓ <strong>Present:</strong> Default state. Only mark if you need to deviate.</li>
-          <li>✗ <strong>Leave:</strong> Counts as absent for attendance calculation.</li>
+          <li>✓ <strong>Default:</strong> All periods are counted as Present unless marked otherwise.</li>
+          <li>✗ <strong>Absent:</strong> Counts against your attendance calculation.</li>
           <li>⚡ <strong>OD:</strong> On-duty (auto-approved). Counts as present for attendance.</li>
+          <li>↩ <strong>Reset:</strong> Clears the mark and returns to default Present state.</li>
         </ul>
       </div>
     </div>

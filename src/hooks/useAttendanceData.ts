@@ -37,46 +37,50 @@ export const useAttendanceData = () => {
   // Add a new attendance log
   const addAttendanceLog = useCallback(
     (log: Omit<AttendanceLog, 'id'>) => {
-      if (!data) return;
-      // Use subject_code if available, else use subject_name
-      const subjectIdentifier = log.subject_code || 
-        data.subjects.find(s => s.subject_code === log.subject_code)?.subject_name || 
-        log.subject_code;
-      const newLog: AttendanceLog = {
-        ...log,
-        id: `${log.date}-${log.period_number}-${subjectIdentifier}`,
-      };
-      setData({
-        ...data,
-        attendance: [
-          ...data.attendance.filter(
-            (l) =>
-              !(
-                l.date === log.date &&
-                l.period_number === log.period_number &&
-                l.subject_code === log.subject_code
-              )
-          ),
-          newLog,
-        ],
+      setData((prevData) => {
+        if (!prevData) return prevData;
+        // Use subject_code if available, else use subject_name
+        const subjectIdentifier = log.subject_code || 
+          prevData.subjects.find(s => s.subject_code === log.subject_code)?.subject_name || 
+          log.subject_code;
+        const newLog: AttendanceLog = {
+          ...log,
+          id: `${log.date}-${log.period_number}-${subjectIdentifier}`,
+        };
+        return {
+          ...prevData,
+          attendance: [
+            ...prevData.attendance.filter(
+              (l) =>
+                !(
+                  l.date === log.date &&
+                  l.period_number === log.period_number &&
+                  l.subject_code === log.subject_code
+                )
+            ),
+            newLog,
+          ],
+        };
       });
     },
-    [data]
+    []
   );
 
   // Delete an attendance log
   const deleteAttendanceLog = useCallback(
-    (date: string, period: number, subjectCode: string) => {
-      if (!data) return;
-      setData({
-        ...data,
-        attendance: data.attendance.filter(
-          (l) =>
-            !(l.date === date && l.period_number === period && l.subject_code === subjectCode)
-        ),
+    (date: string, period: number, subjectCode: string | undefined) => {
+      setData((prevData) => {
+        if (!prevData) return prevData;
+        return {
+          ...prevData,
+          attendance: prevData.attendance.filter(
+            (l) =>
+              !(l.date === date && l.period_number === period && l.subject_code === subjectCode)
+          ),
+        };
       });
     },
-    [data]
+    []
   );
 
   // Bulk mark full day as leave
@@ -115,7 +119,8 @@ export const useAttendanceData = () => {
         data.timetable,
         data.attendance,
         data.holidays,
-        targetDate
+        targetDate,
+        data.semester_config
       );
     },
     [data]
@@ -150,24 +155,55 @@ export const useAttendanceData = () => {
       // Create a temporary attendance array with simulated leave
       const simulatedAttendance = [...data.attendance];
 
-      // Add leave entries for each day and subject in range
+      // Map day index to day name
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      // Get holiday dates for quick lookup
+      const holidayDates = new Set(data.holidays.map((h) => h.date));
+
+      // Helper to check if date is in CAT exam period
+      const isInCATExamPeriod = (dateStr: string): boolean => {
+        if (!data.semester_config?.cat_periods) return false;
+        const date = new Date(dateStr);
+        for (const cat of data.semester_config.cat_periods) {
+          const catStart = new Date(cat.start_date);
+          const catEnd = new Date(cat.end_date);
+          if (date >= catStart && date <= catEnd) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      // Add leave entries for each ACTUAL SCHEDULED PERIOD in the date range
       const start = new Date(startDate);
       const end = new Date(endDate);
 
       for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
         const dateStr = date.toISOString().split('T')[0];
-        for (const subjectCode of subjectCodes) {
-          // Only add if not already marked with other status
-          if (
-            !simulatedAttendance.find(
-              (l) => l.date === dateStr && l.subject_code === subjectCode
-            )
-          ) {
+        const dayName = dayNames[date.getDay()];
+
+        // Skip Sundays, holidays, and CAT exam periods
+        if (dayName === 'Sunday' || holidayDates.has(dateStr) || isInCATExamPeriod(dateStr)) continue;
+
+        // Find all timetable slots for this day that match the selected subjects
+        const slotsForDay = data.timetable.filter(
+          (slot) => slot.day_of_week === dayName && subjectCodes.includes(slot.subject_code || '')
+        );
+
+        // Add a leave entry for each scheduled period
+        for (const slot of slotsForDay) {
+          const existingLog = simulatedAttendance.find(
+            (l) => l.date === dateStr && l.period_number === slot.period_number && l.subject_code === slot.subject_code
+          );
+
+          // Only add if not already logged
+          if (!existingLog) {
             simulatedAttendance.push({
-              id: `sim-${dateStr}-${subjectCode}`,
+              id: `sim-${dateStr}-${slot.period_number}-${slot.subject_code}`,
               date: dateStr,
-              period_number: 1,
-              subject_code: subjectCode,
+              period_number: slot.period_number,
+              subject_code: slot.subject_code,
               status: 'leave',
             });
           }
@@ -180,7 +216,8 @@ export const useAttendanceData = () => {
         data.timetable,
         simulatedAttendance,
         data.holidays,
-        new Date().toISOString().split('T')[0]
+        new Date().toISOString().split('T')[0],
+        data.semester_config
       );
     },
     [data]

@@ -28,10 +28,18 @@ export interface AttendanceLog {
   notes?: string;
 }
 
+export interface CATExamPeriod {
+  id: string;
+  name: string; // e.g., "CAT 1", "CAT 2"
+  start_date: string; // ISO date
+  end_date: string; // ISO date
+}
+
 export interface SemesterConfig {
   start_date: string; // ISO date
   end_date: string; // ISO date
   last_instruction_date: string; // ISO date
+  cat_periods?: CATExamPeriod[]; // CAT exam periods
 }
 
 export interface Holiday {
@@ -60,9 +68,9 @@ export interface AppData {
 }
 
 export interface AttendanceStats {
-  subject_code: string;
+  subject_code?: string;
   subject_name: string;
-  credits: 3 | 4;
+  credits: 0 | 1.5 | 3 | 4;
   total_sessions: number;
   attended_sessions: number;
   percentage: number;

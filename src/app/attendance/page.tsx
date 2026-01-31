@@ -48,7 +48,7 @@ export default function AttendancePage() {
     );
   }
 
-  const handleLogAttendance = (period: number, subject: string, status: any) => {
+  const handleLogAttendance = (period: number, subject: string | undefined, status: any) => {
     addAttendanceLog({
       date: selectedDate,
       period_number: period as any,
@@ -57,7 +57,7 @@ export default function AttendancePage() {
     });
   };
 
-  const handleDeleteAttendance = (period: number, subject: string) => {
+  const handleDeleteAttendance = (period: number, subject: string | undefined) => {
     deleteAttendanceLog(selectedDate, period, subject);
   };
 
@@ -111,7 +111,7 @@ export default function AttendancePage() {
           <p className="font-semibold mb-2">💡 Pro Tips:</p>
           <ul className="space-y-1 text-xs">
             <li>• Default state is <strong>Present</strong> — only mark deviations</li>
-            <li>• Use <strong>Leave</strong> for absences (counts against attendance)</li>
+            <li>• Use <strong>Absent</strong> for absences (counts against attendance)</li>
             <li>• Use <strong>OD</strong> for official duties (counts as present)</li>
             <li>• Changes save automatically to your local storage</li>
           </ul>
