@@ -250,9 +250,16 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
           )}
           <select
             value={newSubject.credits}
-            onChange={(e) =>
-              setNewSubject({ ...newSubject, credits: parseFloat(e.target.value) as 0 | 1.5 | 2 | 3 | 4, subject_code: '', zero_credit_type: 'library' })
-            }
+            onChange={(e) => {
+              const newCredits = parseFloat(e.target.value) as 0 | 1.5 | 2 | 3 | 4;
+              if (newCredits === 0) {
+                // Only reset for zero credits
+                setNewSubject({ ...newSubject, credits: newCredits, subject_code: '', zero_credit_type: 'library' });
+              } else {
+                // Keep existing subject_code for other credit types
+                setNewSubject({ ...newSubject, credits: newCredits, zero_credit_type: undefined });
+              }
+            }}
             className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-900 dark:text-white"
           >
             <option value={2}>2 Credits</option>
