@@ -37,30 +37,35 @@ export default function Dashboard() {
 
   if (!data || data.subjects.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 via-blue-50 dark:via-gray-900 to-indigo-100 dark:to-gray-800 flex items-center justify-center p-6">
-        <div className="max-w-lg w-full">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl shadow-blue-100 dark:shadow-gray-900 p-10 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-              Welcome to AttendanceTracker
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg">
-              Set up your semester, subjects, and timetable to start tracking your attendance.
-            </p>
-            <Link
-              href="/settings"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold text-lg shadow-lg shadow-blue-200 transition-all hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Get Started
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          {/* Simple icon */}
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
           </div>
+
+          {/* Title */}
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+            Attendance Tracker
+          </h1>
+          
+          {/* Description */}
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
+            Track your college attendance and never fall below 75%
+          </p>
+
+          {/* CTA Button */}
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            Get Started
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       </div>
     );
