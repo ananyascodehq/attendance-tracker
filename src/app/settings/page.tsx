@@ -5,6 +5,7 @@ import { useAttendanceData } from '@/hooks/useAttendanceData';
 import SubjectsManager from '@/components/SubjectsManager';
 import TimetableBuilder from '@/components/TimetableBuilder';
 import SemesterConfigManager from '@/components/SemesterConfigManager';
+import { Subject, TimetableSlot, SemesterConfig, Holiday } from '@/types';
 
 // SVG Icons
 const SettingsIcon = ({ className }: { className?: string }) => (
@@ -96,7 +97,7 @@ export default function SettingsPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Track changes and show save indicator
-  const handleSubjectsUpdate = (subjects: typeof data.subjects) => {
+  const handleSubjectsUpdate = (subjects: Subject[]) => {
     setSaveStatus('saving');
     updateAllSubjects(subjects);
     setTimeout(() => {
@@ -106,7 +107,7 @@ export default function SettingsPage() {
     }, 300);
   };
 
-  const handleTimetableUpdate = (timetable: typeof data.timetable) => {
+  const handleTimetableUpdate = (timetable: TimetableSlot[]) => {
     setSaveStatus('saving');
     updateAllTimetable(timetable);
     setTimeout(() => {
@@ -116,7 +117,7 @@ export default function SettingsPage() {
     }, 300);
   };
 
-  const handleConfigUpdate = (config: typeof data.semester_config) => {
+  const handleConfigUpdate = (config: SemesterConfig) => {
     setSaveStatus('saving');
     updateSemesterConfig(config);
     setTimeout(() => {
@@ -126,7 +127,7 @@ export default function SettingsPage() {
     }, 300);
   };
 
-  const handleHolidaysUpdate = (holidays: typeof data.holidays) => {
+  const handleHolidaysUpdate = (holidays: Holiday[]) => {
     setSaveStatus('saving');
     updateAllHolidays(holidays);
     setTimeout(() => {

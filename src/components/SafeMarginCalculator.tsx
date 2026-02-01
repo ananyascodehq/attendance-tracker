@@ -82,7 +82,7 @@ export const SafeMarginCalculator = () => {
       <div className="space-y-4">
         {data.subjects.map((subject) => {
           const subjectKey = subject.subject_code || subject.subject_name;
-          const safeMargin = getSafeMargin(subject.subject_code);
+          const safeMargin = getSafeMargin(subjectKey);
           if (!safeMargin) return null;
 
           return (
