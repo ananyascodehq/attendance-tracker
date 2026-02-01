@@ -3,7 +3,7 @@ export type ZeroCreditType = 'library' | 'seminar' | 'vac';
 export interface Subject {
   subject_code?: string;
   subject_name: string;
-  credits: 0 | 1.5 | 3 | 4;
+  credits: 0 | 1.5 | 2 | 3 | 4;
   zero_credit_type?: ZeroCreditType; // For 0-credit courses: 'library', 'seminar', or 'vac'
 }
 

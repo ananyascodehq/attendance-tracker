@@ -115,7 +115,7 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
   const [newSubject, setNewSubject] = useState({
     subject_code: '',
     subject_name: '',
-    credits: 3 as 0 | 1.5 | 3 | 4,
+    credits: 3 as 0 | 1.5 | 2 | 3 | 4,
     zero_credit_type: 'library' as 'library' | 'seminar' | 'vac',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -251,10 +251,11 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
           <select
             value={newSubject.credits}
             onChange={(e) =>
-              setNewSubject({ ...newSubject, credits: parseFloat(e.target.value) as 0 | 1.5 | 3 | 4, subject_code: '', zero_credit_type: 'library' })
+              setNewSubject({ ...newSubject, credits: parseFloat(e.target.value) as 0 | 1.5 | 2 | 3 | 4, subject_code: '', zero_credit_type: 'library' })
             }
             className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-900 dark:text-white"
           >
+            <option value={2}>2 Credits</option>
             <option value={3}>3 Credits</option>
             <option value={4}>4 Credits</option>
             <option value={1.5}>1.5 Credits (Lab)</option>
