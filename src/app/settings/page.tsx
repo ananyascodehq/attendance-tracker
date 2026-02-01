@@ -47,6 +47,18 @@ const SaveIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const TrashIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+const ExclamationIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
 type TabId = 'subjects' | 'timetable' | 'semester';
 
 interface TabConfig {
@@ -90,11 +102,12 @@ const tabs: TabConfig[] = [
 ];
 
 export default function SettingsPage() {
-  const { data, loading, updateAllSubjects, updateAllTimetable, updateSemesterConfig, updateAllHolidays } =
+  const { data, loading, updateAllSubjects, updateAllTimetable, updateSemesterConfig, updateAllHolidays, clearAllData } =
     useAttendanceData();
   const [activeTab, setActiveTab] = useState<TabId>('subjects');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Track changes and show save indicator
   const handleSubjectsUpdate = (subjects: Subject[]) => {
@@ -254,7 +267,65 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Danger Zone */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Danger Zone</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Irreversible actions</p>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Clear All Data</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Delete all subjects, timetable, attendance logs, and settings</p>
+              </div>
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 font-medium transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Clear Data
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Clear Data Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ExclamationIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Clear All Data?</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                This will permanently delete all your subjects, timetable, attendance records, holidays, and semester configuration. This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  clearAllData();
+                  setShowClearConfirm(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors flex items-center gap-2"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Yes, Clear Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Save Indicator */}
       <div
