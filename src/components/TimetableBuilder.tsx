@@ -151,6 +151,50 @@ export default function TimetableBuilder({
     return true;
   };
 
+  // Direct placement function for mobile tap-to-place (doesn't rely on state)
+  const placeSubjectInCell = (day: string, period: number, subjectCode?: string, subjectName?: string) => {
+    const identifier = subjectCode || subjectName;
+    const isLab = isLabSubject(identifier);
+    const isVAC = isVACSubject(identifier);
+    const periodsNeeded = isLab ? 3 : isVAC ? 2 : 1;
+
+    // Check if we can fit the required periods
+    if (!canFitConsecutivePeriods(day, period, periodsNeeded)) {
+      alert(
+        isLab
+          ? `Lab class needs 3 consecutive periods. Cannot fit starting from period ${period}.`
+          : isVAC
+          ? `VAC needs 2 consecutive periods. Cannot fit starting from period ${period}.`
+          : `Period ${period} is already occupied.`
+      );
+      return;
+    }
+
+    // Create slots for all periods
+    let updated = timetable.filter(
+      (slot) => slot.day_of_week !== day || !PERIODS.slice(period - 1, period - 1 + periodsNeeded).includes(slot.period_number as any)
+    );
+
+    for (let i = 0; i < periodsNeeded; i++) {
+      const currentPeriod = period + i;
+      const periodTime = PERIOD_TIMES[currentPeriod];
+      const subjectIdentifier = identifier || 'unknown';
+      
+      const newSlot: TimetableSlot = {
+        id: `${day}-${currentPeriod}-${subjectIdentifier}`,
+        day_of_week: day as any,
+        period_number: currentPeriod as any,
+        subject_code: subjectIdentifier,
+        start_time: periodTime.start,
+        end_time: periodTime.end,
+        duration_hours: periodTime.duration,
+      };
+      updated = [...updated, newSlot];
+    }
+
+    onUpdate(updated);
+  };
+
   const handleDropOnCell = (day: string, period: number) => {
     if (!draggedData) return;
 
@@ -457,8 +501,7 @@ export default function TimetableBuilder({
                           onClick={() => {
                             // Handle tap-to-place for mobile
                             if (selectedSubject && !slot) {
-                              setDraggedData({ type: 'subject', subject_code: selectedSubject.code, subject_name: selectedSubject.name });
-                              handleDropOnCell(day, period);
+                              placeSubjectInCell(day, period, selectedSubject.code, selectedSubject.name);
                               setSelectedSubject(null);
                             }
                           }}
