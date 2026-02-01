@@ -112,11 +112,15 @@ const isLabSubject = (subject: Subject): boolean => {
 };
 
 export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerProps) {
-  const [newSubject, setNewSubject] = useState({
+  const [newSubject, setNewSubject] = useState<{
+    subject_code: string;
+    subject_name: string;
+    credits: 0 | 1.5 | 2 | 3 | 4;
+    zero_credit_type?: 'library' | 'seminar' | 'vac';
+  }>({
     subject_code: '',
     subject_name: '',
-    credits: 3 as 0 | 1.5 | 2 | 3 | 4,
-    zero_credit_type: 'library' as 'library' | 'seminar' | 'vac',
+    credits: 3,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -256,8 +260,9 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
                 // Only reset for zero credits
                 setNewSubject({ ...newSubject, credits: newCredits, subject_code: '', zero_credit_type: 'library' });
               } else {
-                // Keep existing subject_code for other credit types
-                setNewSubject({ ...newSubject, credits: newCredits, zero_credit_type: undefined });
+                // Keep existing subject_code for other credit types, remove zero_credit_type
+                const { zero_credit_type, ...rest } = newSubject;
+                setNewSubject({ ...rest, credits: newCredits });
               }
             }}
             className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-900 dark:text-white"

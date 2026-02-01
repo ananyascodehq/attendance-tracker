@@ -70,7 +70,7 @@ export interface AppData {
 export interface AttendanceStats {
   subject_code?: string;
   subject_name: string;
-  credits: 0 | 1.5 | 3 | 4;
+  credits: 0 | 1.5 | 2 | 3 | 4;
   total_sessions: number;
   attended_sessions: number;
   present_count: number;

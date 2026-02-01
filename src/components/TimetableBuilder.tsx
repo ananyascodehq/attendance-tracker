@@ -99,6 +99,8 @@ export default function TimetableBuilder({
 }: TimetableBuilderProps) {
   const [draggedData, setDraggedData] = useState<DraggedData | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  // Mobile tap-to-place mode
+  const [selectedSubject, setSelectedSubject] = useState<{ code?: string; name?: string } | null>(null);
 
   const getSlotForPosition = (day: string, period: number): TimetableSlot | null => {
     return timetable.find(
@@ -296,19 +298,36 @@ export default function TimetableBuilder({
       <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
         <p className="font-semibold mb-2">📌 How to use:</p>
         <ul className="text-xs space-y-1">
-          <li>• Drag any <strong>color-coded subject card</strong> from above and drop it on a time slot</li>
+          <li>• <strong>Desktop:</strong> Drag subject cards and drop them on time slots</li>
+          <li>• <strong>Mobile:</strong> Tap a subject to select it, then tap a time slot to place it</li>
           <li>• <strong>Lab classes</strong> automatically fill 3 consecutive periods</li>
           <li>• <strong>VAC courses</strong> automatically fill 2 consecutive periods</li>
-          <li>• Drag <strong>existing classes</strong> within the grid to reschedule them</li>
           <li>• Click the <strong>×</strong> button to delete a class</li>
         </ul>
       </div>
+
+      {/* Selected Subject Indicator for Mobile */}
+      {selectedSubject && (
+        <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700 flex items-center justify-between">
+          <span>
+            <strong>Selected:</strong> {selectedSubject.code || selectedSubject.name} — Tap a time slot to place it
+          </span>
+          <button
+            onClick={() => setSelectedSubject(null)}
+            className="text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 font-bold px-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Subject Palette - Top Horizontal */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Subjects</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {subjects.map((subject) => (
+          {subjects.map((subject) => {
+            const isSelected = selectedSubject?.code === subject.subject_code && selectedSubject?.name === subject.subject_name;
+            return (
             <div
               key={subject.subject_code || subject.subject_name}
               draggable
@@ -316,9 +335,19 @@ export default function TimetableBuilder({
                 setDraggedData({ type: 'subject', subject_code: subject.subject_code, subject_name: subject.subject_name })
               }
               onDragEnd={() => setDraggedData(null)}
+              onClick={() => {
+                // Toggle selection for mobile tap-to-place
+                if (isSelected) {
+                  setSelectedSubject(null);
+                } else {
+                  setSelectedSubject({ code: subject.subject_code, name: subject.subject_name });
+                }
+              }}
               className={`${getSubjectColor(
                 subject.subject_code
-              )} border-2 p-3 rounded-lg cursor-grab active:cursor-grabbing hover:shadow-lg transition-shadow`}
+              )} border-2 p-3 rounded-lg cursor-grab active:cursor-grabbing hover:shadow-lg transition-all select-none touch-none ${
+                isSelected ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-800' : ''
+              }`}
             >
               {subject.subject_code ? (
                 <>
@@ -349,7 +378,8 @@ export default function TimetableBuilder({
                 </div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
 
@@ -412,9 +442,9 @@ export default function TimetableBuilder({
                         <td
                           key={cellId}
                           colSpan={colSpan}
-                          className={`border border-gray-200 dark:border-gray-600 p-0 h-24 relative align-top transition-all ${
-                            isHovered ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-400 dark:ring-blue-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
+                          className={`border border-gray-200 dark:border-gray-600 p-0 h-24 relative align-top transition-all cursor-pointer ${
+                            isHovered ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-400 dark:ring-blue-500' : ''
+                          } ${selectedSubject && !slot ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                           onDragOver={(e) => {
                             e.preventDefault();
                             setDragOverCell(cellId);
@@ -423,6 +453,14 @@ export default function TimetableBuilder({
                           onDrop={(e) => {
                             e.preventDefault();
                             handleDropOnCell(day, period);
+                          }}
+                          onClick={() => {
+                            // Handle tap-to-place for mobile
+                            if (selectedSubject && !slot) {
+                              setDraggedData({ type: 'subject', subject_code: selectedSubject.code, subject_name: selectedSubject.name });
+                              handleDropOnCell(day, period);
+                              setSelectedSubject(null);
+                            }
                           }}
                         >
                           {slot ? (
