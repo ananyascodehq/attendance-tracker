@@ -23,6 +23,7 @@ export const LeaveSimulator = () => {
   const { data, simulateLeaveImpact, getStats } = useAttendanceData();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [singleDay, setSingleDay] = useState(false);
   const [simResult, setSimResult] = useState<{
     overall_stats: OverallStats;
     subject_stats: AttendanceStats[];
@@ -182,31 +183,55 @@ export const LeaveSimulator = () => {
         </p>
 
         {/* Date Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={singleDay}
+              onChange={(e) => {
+                setSingleDay(e.target.checked);
+                if (e.target.checked && startDate) {
+                  setEndDate(startDate);
+                }
+                setSimResult(null);
+              }}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Single day leave</span>
+          </label>
+        </div>
+        <div className={`grid grid-cols-1 ${singleDay ? '' : 'md:grid-cols-2'} gap-4 mb-6`}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              {singleDay ? 'Leave Date' : 'Start Date'}
+            </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
+                if (singleDay) {
+                  setEndDate(e.target.value);
+                }
                 setSimResult(null);
               }}
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setSimResult(null);
-              }}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-            />
-          </div>
+          {!singleDay && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setSimResult(null);
+                }}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
+              />
+            </div>
+          )}
         </div>
 
         {/* Schedule Preview */}
