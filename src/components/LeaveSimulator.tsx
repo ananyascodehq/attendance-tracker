@@ -74,6 +74,8 @@ export const LeaveSimulator = () => {
       const start = parseISO(startDate);
       const end = parseISO(endDate);
 
+      // Guard: if dates are invalid, return empty
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
       if (start > end) return [];
 
       const days = eachDayOfInterval({ start, end });

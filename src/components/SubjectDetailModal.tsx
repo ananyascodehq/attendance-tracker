@@ -59,9 +59,15 @@ export const SubjectDetailModal = ({
   const classRecords = useMemo((): ClassRecord[] => {
     const records: ClassRecord[] = [];
 
+    // Guard: check if semester config has valid dates
+    if (!semesterConfig?.start_date) return records;
+
     const startDate = parseISO(semesterConfig.start_date);
     const today = new Date();
     today.setHours(23, 59, 59, 999);
+
+    // Guard: if start date is in the future, return empty
+    if (startDate > today) return records;
 
     // Get holiday dates for quick lookup
     const holidayDates = new Set(holidays.map((h) => h.date));

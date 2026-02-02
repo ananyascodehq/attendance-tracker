@@ -58,10 +58,13 @@ export const getScheduledSessionsUntilDate = (
   upToDate: string,
   subjects?: Subject[]
 ): number => {
-  if (!semesterConfig) return 0;
+  if (!semesterConfig || !semesterConfig.start_date || !upToDate) return 0;
 
   const startDate = parseISO(semesterConfig.start_date);
   const endDate = parseISO(upToDate);
+
+  // Guard: if either date is invalid, return 0
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
 
   // If end date is before start date, return 0
   if (isBefore(endDate, startDate)) return 0;
