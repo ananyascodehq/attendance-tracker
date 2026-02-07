@@ -1,0 +1,214 @@
+// =============================================
+// Supabase Database Types
+// Generated from supabase/schema.sql
+// =============================================
+
+export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+export type PeriodNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type AttendanceStatusDB = 'present' | 'leave' | 'od';
+export type ZeroCreditTypeDB = 'library' | 'seminar' | 'vac';
+
+// =============================================
+// Profile Table
+// =============================================
+export interface Profile {
+  id: string; // UUID, same as auth.users.id
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  onboarded: boolean;
+  created_at: string; // ISO timestamp
+}
+
+// =============================================
+// Semester Table
+// =============================================
+export interface Semester {
+  id: string; // UUID
+  user_id: string;
+  name: string;
+  start_date: string; // ISO date
+  end_date: string; // ISO date
+  last_instruction_date: string | null; // ISO date
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SemesterInsert {
+  name: string;
+  start_date: string;
+  end_date: string;
+  last_instruction_date?: string | null;
+  is_active?: boolean;
+}
+
+export interface SemesterUpdate {
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+  last_instruction_date?: string | null;
+  is_active?: boolean;
+}
+
+// =============================================
+// Subject Table
+// =============================================
+export interface SubjectDB {
+  id: string; // UUID
+  user_id: string;
+  semester_id: string;
+  subject_code: string | null;
+  subject_name: string;
+  credits: number; // 0, 1.5, 2, 3, or 4
+  zero_credit_type: ZeroCreditTypeDB | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubjectInsert {
+  semester_id: string;
+  subject_code?: string | null;
+  subject_name: string;
+  credits: number;
+  zero_credit_type?: ZeroCreditTypeDB | null;
+}
+
+export interface SubjectUpdate {
+  subject_code?: string | null;
+  subject_name?: string;
+  credits?: number;
+  zero_credit_type?: ZeroCreditTypeDB | null;
+}
+
+// =============================================
+// Timetable Slot Table
+// =============================================
+export interface TimetableSlotDB {
+  id: string; // UUID
+  user_id: string;
+  semester_id: string;
+  subject_id: string | null;
+  day_of_week: DayOfWeek;
+  period_number: PeriodNumber;
+  start_time: string; // HH:mm:ss
+  end_time: string; // HH:mm:ss
+  created_at: string;
+}
+
+export interface TimetableSlotInsert {
+  semester_id: string;
+  subject_id?: string | null;
+  day_of_week: DayOfWeek;
+  period_number: PeriodNumber;
+  start_time: string;
+  end_time: string;
+}
+
+export interface TimetableSlotUpdate {
+  subject_id?: string | null;
+  start_time?: string;
+  end_time?: string;
+}
+
+// =============================================
+// Attendance Log Table
+// =============================================
+export interface AttendanceLogDB {
+  id: string; // UUID
+  user_id: string;
+  semester_id: string;
+  subject_id: string;
+  date: string; // ISO date
+  period_number: PeriodNumber;
+  status: AttendanceStatusDB;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttendanceLogInsert {
+  semester_id: string;
+  subject_id: string;
+  date: string;
+  period_number: PeriodNumber;
+  status: AttendanceStatusDB;
+  notes?: string | null;
+}
+
+export interface AttendanceLogUpdate {
+  status?: AttendanceStatusDB;
+  notes?: string | null;
+}
+
+// =============================================
+// Holiday Table
+// =============================================
+export interface HolidayDB {
+  id: string; // UUID
+  user_id: string;
+  semester_id: string;
+  date: string; // ISO date
+  description: string;
+  created_at: string;
+}
+
+export interface HolidayInsert {
+  semester_id: string;
+  date: string;
+  description: string;
+}
+
+export interface HolidayUpdate {
+  date?: string;
+  description?: string;
+}
+
+// =============================================
+// CAT Period Table
+// =============================================
+export interface CatPeriodDB {
+  id: string; // UUID
+  user_id: string;
+  semester_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+}
+
+export interface CatPeriodInsert {
+  semester_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface CatPeriodUpdate {
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+// =============================================
+// Joined Types (for queries with joins)
+// =============================================
+export interface TimetableSlotWithSubject extends TimetableSlotDB {
+  subject: SubjectDB | null;
+}
+
+export interface AttendanceLogWithSubject extends AttendanceLogDB {
+  subject: SubjectDB;
+}
+
+// =============================================
+// Full Semester Data (for dashboard)
+// =============================================
+export interface SemesterData {
+  semester: Semester;
+  subjects: SubjectDB[];
+  timetable: TimetableSlotDB[];
+  attendance: AttendanceLogDB[];
+  holidays: HolidayDB[];
+  cat_periods: CatPeriodDB[];
+}

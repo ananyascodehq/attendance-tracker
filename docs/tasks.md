@@ -77,20 +77,36 @@
 
 ### Core Tables
 
-- [ ] users (via Supabase auth)
-- [ ] profiles (linked to auth)
-- [ ] semesters
-- [ ] subjects
-- [ ] timetable_slots
-- [ ] attendance_logs
-- [ ] od_logs
-- [ ] holidays
+- [x] users (via Supabase auth)
+- [x] profiles (linked to auth)
+- [x] semesters
+- [x] subjects
+- [x] timetable_slots
+- [x] attendance_logs
+- [x] holidays
+- [x] cat_periods (exam periods)
 
 ### Ownership Rules
 
-- [ ] All rows tied to `auth.uid()`
-- [ ] RLS on every table
-- [ ] Prevent cross-user reads
+- [x] All rows tied to `auth.uid()`
+- [x] RLS on every table
+- [x] Prevent cross-user reads
+
+### TypeScript Types
+
+- [x] Database types (`/types/database.ts`)
+- [x] Insert/Update types for all tables
+
+### Data Access Layer
+
+- [x] Database functions (`/lib/supabase/database.ts`)
+- [x] CRUD for all tables
+- [x] Composite queries (getSemesterData)
+
+### React Hooks
+
+- [x] `useSemesterData` hook with real-time subscriptions
+- [x] `useSemesters` hook for semester list
 
 ---
 
