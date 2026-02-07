@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useData } from '@/components/DataProvider';
 import { AttendanceLogger } from '@/components/AttendanceLogger';
+import { PageLoader } from '@/components/Spinner';
 import Link from 'next/link';
 
 // Icons
@@ -96,14 +97,7 @@ export default function AttendancePage() {
   });
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-700">
-        <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-          <div className="text-gray-500 dark:text-gray-400">Loading attendance...</div>
-        </div>
-      </div>
-    );
+    return <PageLoader variant="attendance" message="Loading attendance..." />;
   }
 
   if (!data || data.subjects.length === 0) {

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
+import { Spinner } from '@/components/Spinner';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -68,7 +69,7 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+              <Spinner size="xs" color="blue" />
             ) : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

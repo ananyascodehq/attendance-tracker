@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useData } from '@/components/DataProvider';
+import { PageLoader } from '@/components/Spinner';
 import SubjectsManager from '@/components/SubjectsManager';
 import TimetableBuilder from '@/components/TimetableBuilder';
 import SemesterConfigManager from '@/components/SemesterConfigManager';
@@ -151,14 +152,7 @@ export default function SettingsPage() {
   };
 
   if (loading || !data) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900">
-        <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-          <div className="text-gray-500 dark:text-gray-400">Loading settings...</div>
-        </div>
-      </div>
-    );
+    return <PageLoader variant="settings" message="Loading settings..." />;
   }
 
   const activeTabConfig = tabs.find(t => t.id === activeTab);

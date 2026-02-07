@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useData } from '@/components/DataProvider';
+import { PageLoader } from '@/components/Spinner';
 import { LeaveSimulator } from '@/components/LeaveSimulator';
 import { OdTracker } from '@/components/OdTracker';
 import { SafeMarginCalculator } from '@/components/SafeMarginCalculator';
@@ -107,14 +108,7 @@ export default function PlannerPage() {
   const [expandedTool, setExpandedTool] = useState<ToolId | null>('leave');
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900">
-        <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-          <div className="text-gray-500 dark:text-gray-400">Loading tools...</div>
-        </div>
-      </div>
-    );
+    return <PageLoader variant="planner" message="Loading tools..." />;
   }
 
   if (!data) {

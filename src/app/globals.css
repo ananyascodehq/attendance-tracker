@@ -2,6 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Spinner Animations ──────────────────────────────────────────────────── */
+
+/* Smooth ring spin */
+.spinner-smooth {
+  animation: spin-smooth 0.7s linear infinite;
+}
+
+@keyframes spin-smooth {
+  to { transform: rotate(360deg); }
+}
+
+/* Orbital spin (slower, elegant) */
+.spinner-orbit {
+  animation: spin-smooth 2.5s linear infinite;
+}
+
+/* Reverse orbital spin */
+.spinner-orbit-reverse {
+  animation: spin-reverse 2s linear infinite;
+}
+
+@keyframes spin-reverse {
+  to { transform: rotate(-360deg); }
+}
+
+/* Breathing pulse for center dot */
+.spinner-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.5); opacity: 1; }
+}
+
+/* Bouncing dots */
+.spinner-bounce-1 { animation: dot-bounce 1.4s ease-in-out infinite; }
+.spinner-bounce-2 { animation: dot-bounce 1.4s ease-in-out 0.16s infinite; }
+.spinner-bounce-3 { animation: dot-bounce 1.4s ease-in-out 0.32s infinite; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Fade-in for loading text */
+.spinner-fade-in {
+  animation: fade-in-up 0.6s ease-out both;
+  animation-delay: 0.3s;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+
 * {
   margin: 0;
   padding: 0;

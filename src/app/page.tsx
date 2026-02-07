@@ -1,6 +1,7 @@
 'use client';
 
 import { useData } from '@/components/DataProvider';
+import { PageLoader } from '@/components/Spinner';
 import { DashboardCard } from '@/components/DashboardCard';
 import { SubjectDetailModal } from '@/components/SubjectDetailModal';
 import { AttendanceChart } from '@/components/AttendanceChart';
@@ -25,14 +26,7 @@ export default function Dashboard() {
   }, [data, loading, getStats]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 to-blue-50 dark:to-gray-800 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader variant="dashboard" message="Loading your dashboard..." />;
   }
 
   if (!data || data.subjects.length === 0) {

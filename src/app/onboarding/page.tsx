@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { DotsLoader } from '@/components/Spinner';
 import { useAuth } from '@/components/AuthProvider';
 import * as db from '@/lib/supabase/database';
 
@@ -224,7 +225,7 @@ export default function OnboardingPage() {
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <DotsLoader color="white" size="sm" />
                   Creating semester...
                 </>
               ) : (
