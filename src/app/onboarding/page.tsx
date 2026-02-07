@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { DotsLoader } from '@/components/Spinner';
 import { useAuth } from '@/components/AuthProvider';
-import * as db from '@/lib/supabase/database';
+import { useData } from '@/components/DataProvider';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { createSemester, refresh } = useData();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'welcome' | 'semester'>('welcome');
   
@@ -38,20 +39,17 @@ export default function OnboardingPage() {
     try {
       const supabase = createClient();
       
-      // Create the first semester
-      await db.createSemester({
-        name: semesterName,
-        start_date: startDate,
-        end_date: endDate,
-        last_instruction_date: endDate,
-        is_active: true,
-      });
+      // Create the first semester (via DataProvider — triggers loadData)
+      await createSemester(semesterName, startDate, endDate, endDate);
 
       // Mark user as onboarded
       await supabase
         .from('profiles')
         .update({ onboarded: true })
         .eq('id', user?.id);
+
+      // Ensure DataProvider has latest data before navigating
+      await refresh();
 
       // Redirect to settings to set up subjects and timetable
       router.push('/settings');

@@ -10,7 +10,7 @@ import { OverallStats, AttendanceStats } from '@/types';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  const { data, loading, getStats } = useData();
+  const { data, loading, error, getStats } = useData();
   const [stats, setStats] = useState<{
     overall_stats: OverallStats;
     subject_stats: AttendanceStats[];
@@ -27,6 +27,17 @@ export default function Dashboard() {
 
   if (loading) {
     return <PageLoader variant="dashboard" message="Loading your dashboard..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="text-center max-w-md bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-red-200 dark:border-red-800">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Failed to load dashboard</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{error.message}</p>
+        </div>
+      </div>
+    );
   }
 
   if (!data || data.subjects.length === 0) {
