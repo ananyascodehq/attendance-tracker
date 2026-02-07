@@ -294,9 +294,10 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {(() => {
               const colorMap = getSubjectColors(subjects);
-              return subjects.map((subject) => {
-                const key = subject.subject_code || subject.subject_name;
-                const color = colorMap.get(key) || subjectColors[0];
+              return subjects.map((subject, index) => {
+                const key = subject.subject_code || `${subject.subject_name}-${index}`;
+                const colorKey = subject.subject_code || subject.subject_name;
+                const color = colorMap.get(colorKey) || subjectColors[0];
                 return (
                   <div
                     key={key}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { TimetableSlot, Subject } from '@/types';
 
 interface TimetableBuilderProps {
@@ -97,13 +97,47 @@ export default function TimetableBuilder({
   subjects,
   onUpdate,
 }: TimetableBuilderProps) {
+  // ── Local draft state (only saved on explicit Save) ──
+  const [draft, setDraft] = useState<TimetableSlot[]>(timetable);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Sync draft when props change externally (e.g. initial load, realtime update)
+  useEffect(() => {
+    if (!hasChanges) {
+      setDraft(timetable);
+    }
+  }, [timetable, hasChanges]);
+
+  // Wrapper: update draft locally (not Supabase)
+  const updateDraft = useCallback((updated: TimetableSlot[]) => {
+    setDraft(updated);
+    setHasChanges(true);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      onUpdate(draft);
+      setHasChanges(false);
+    } finally {
+      // Small delay so the user sees feedback
+      setTimeout(() => setSaving(false), 400);
+    }
+  }, [draft, onUpdate]);
+
+  const handleDiscard = useCallback(() => {
+    setDraft(timetable);
+    setHasChanges(false);
+  }, [timetable]);
+
   const [draggedData, setDraggedData] = useState<DraggedData | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   // Mobile tap-to-place mode
   const [selectedSubject, setSelectedSubject] = useState<{ code?: string; name?: string } | null>(null);
 
   const getSlotForPosition = (day: string, period: number): TimetableSlot | null => {
-    return timetable.find(
+    return draft.find(
       (slot) =>
         slot.day_of_week === day &&
         slot.period_number === period
@@ -171,7 +205,7 @@ export default function TimetableBuilder({
     }
 
     // Create slots for all periods
-    let updated = timetable.filter(
+    let updated = draft.filter(
       (slot) => slot.day_of_week !== day || !PERIODS.slice(period - 1, period - 1 + periodsNeeded).includes(slot.period_number as any)
     );
 
@@ -192,7 +226,7 @@ export default function TimetableBuilder({
       updated = [...updated, newSlot];
     }
 
-    onUpdate(updated);
+    updateDraft(updated);
   };
 
   const handleDropOnCell = (day: string, period: number) => {
@@ -218,7 +252,7 @@ export default function TimetableBuilder({
       }
 
       // Create slots for all periods
-      let updated = timetable.filter(
+      let updated = draft.filter(
         (slot) => slot.day_of_week !== day || !PERIODS.slice(period - 1, period - 1 + periodsNeeded).includes(slot.period_number as any)
       );
 
@@ -240,7 +274,7 @@ export default function TimetableBuilder({
         updated = [...updated, newSlot];
       }
 
-      onUpdate(updated);
+      updateDraft(updated);
     } else if (draggedData.type === 'slot' && draggedData.slot) {
       // Moving existing slot - preserve lab/VAC behavior
       const isLab = isLabSubject(draggedData.slot.subject_code);
@@ -248,7 +282,7 @@ export default function TimetableBuilder({
       const periodsNeeded = isLab ? 3 : isVAC ? 2 : 1;
 
       // Remove all periods of this slot from original position
-      let updated = timetable.filter((s) => s.subject_code !== draggedData.slot!.subject_code || s.day_of_week !== draggedData.slot!.day_of_week);
+      let updated = draft.filter((s) => s.subject_code !== draggedData.slot!.subject_code || s.day_of_week !== draggedData.slot!.day_of_week);
 
       // Check if we can fit at new position
       if (!canFitConsecutivePeriods(day, period, periodsNeeded)) {
@@ -280,7 +314,7 @@ export default function TimetableBuilder({
         updated = [...updated, movedSlot];
       }
 
-      onUpdate(updated);
+      updateDraft(updated);
     }
 
     setDraggedData(null);
@@ -288,7 +322,7 @@ export default function TimetableBuilder({
   };
 
   const deleteSlot = (id: string) => {
-    onUpdate(timetable.filter((slot) => slot.id !== id));
+    updateDraft(draft.filter((slot) => slot.id !== id));
   };
 
   // Build color map using same logic as SubjectsManager for consistency
@@ -350,6 +384,41 @@ export default function TimetableBuilder({
         </ul>
       </div>
 
+      {/* Save / Discard bar */}
+      {hasChanges && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-3 flex items-center justify-between gap-3 animate-in">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-sm font-medium">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            You have unsaved changes
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDiscard}
+              className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            >
+              Discard
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-1.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white spinner-smooth" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Save Timetable
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Selected Subject Indicator for Mobile */}
       {selectedSubject && (
         <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700 flex items-center justify-between">
@@ -369,10 +438,10 @@ export default function TimetableBuilder({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Subjects</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {subjects.map((subject) => {
-            const subjectKey = subject.subject_code || subject.subject_name;
+          {subjects.map((subject, index) => {
+            const subjectKey = subject.subject_code || `${subject.subject_name}-${index}`;
             const selectedKey = selectedSubject?.code || selectedSubject?.name;
-            const isSelected = selectedKey === subjectKey;
+            const isSelected = selectedKey === (subject.subject_code || subject.subject_name);
             return (
             <div
               key={subjectKey}
