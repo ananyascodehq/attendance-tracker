@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import { OverallStats, AttendanceStats, TimetableSlot } from '@/types';
 import { eachDayOfInterval, parseISO, format, getDay } from 'date-fns';
 
@@ -20,7 +20,7 @@ interface DaySchedule {
 }
 
 export const LeaveSimulator = () => {
-  const { data, simulateLeaveImpact, getStats } = useAttendanceData();
+  const { data, simulateLeaveImpact, getStats } = useData();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [singleDay, setSingleDay] = useState(false);

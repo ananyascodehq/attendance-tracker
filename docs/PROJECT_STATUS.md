@@ -1,8 +1,8 @@
-# Personal ERP Attendance Tracker - Project Status Document
+# Campus Attendance Tracker - Project Status Document
 
-**Version:** 1.3.0  
+**Version:** 2.0.0  
 **Last Updated:** February 8, 2026  
-**Status:** Production Ready
+**Status:** Multi-User Platform (Cloud-Synced)
 
 ---
 
@@ -11,12 +11,15 @@
 1. [Project Overview](#project-overview)
 2. [Tech Stack](#tech-stack)
 3. [Architecture](#architecture)
-4. [Features Implemented](#features-implemented)
-5. [Data Models](#data-models)
-6. [Calculation Logic](#calculation-logic)
-7. [Components Breakdown](#components-breakdown)
-8. [Known Limitations](#known-limitations)
-9. [Potential Improvements](#potential-improvements)
+4. [Authentication System](#authentication-system)
+5. [Database Schema](#database-schema)
+6. [Features Implemented](#features-implemented)
+7. [Data Models](#data-models)
+8. [Calculation Logic](#calculation-logic)
+9. [Components Breakdown](#components-breakdown)
+10. [Migration Phases](#migration-phases)
+11. [Known Limitations](#known-limitations)
+12. [Potential Improvements](#potential-improvements)
 
 ---
 
@@ -31,21 +34,26 @@ A comprehensive Next.js application for college students to track semester atten
 - Calculate safe margins for skipping classes
 - Track On-Duty (OD) hours (max 72 per semester)
 - Manage semester configuration, holidays, and CAT exam periods
+- **Multi-user support** with cloud sync via Supabase
+- **Google OAuth** restricted to `@svce.ac.in` college domain
 
 ---
 
 ## 🛠 Tech Stack
 
-| Category      | Technology           | Version     |
-| ------------- | -------------------- | ----------- |
-| Framework     | Next.js (App Router) | 16.1.6      |
-| Language      | TypeScript           | 5.3.x       |
-| UI            | React                | 18.2.x      |
-| Styling       | Tailwind CSS         | 3.3.x       |
-| Date Handling | date-fns             | 2.30.x      |
-| Forms         | react-hook-form      | 7.48.x      |
-| Charts        | Recharts             | 2.15.x      |
-| Storage       | localStorage         | Browser API |
+| Category      | Technology           | Version |
+| ------------- | -------------------- | ------- |
+| Framework     | Next.js (App Router) | 16.1.6  |
+| Language      | TypeScript           | 5.3.x   |
+| UI            | React                | 18.2.x  |
+| Styling       | Tailwind CSS         | 3.3.x   |
+| Date Handling | date-fns             | 2.30.x  |
+| Forms         | react-hook-form      | 7.48.x  |
+| Charts        | Recharts             | 2.15.x  |
+| **Auth**      | Supabase Auth        | 2.x     |
+| **Database**  | Supabase (Postgres)  | -       |
+| **Realtime**  | Supabase Realtime    | -       |
+| **SSR Auth**  | @supabase/ssr        | -       |
 
 ---
 
@@ -57,49 +65,200 @@ A comprehensive Next.js application for college students to track semester atten
 src/
 ├── app/                    # Next.js App Router pages
 │   ├── page.tsx           # Dashboard (home)
-│   ├── layout.tsx         # Root layout with navigation
+│   ├── layout.tsx         # Root layout (AuthProvider + DataProvider)
 │   ├── globals.css        # Global styles + Tailwind
 │   ├── attendance/        # Attendance logging page
+│   ├── auth/
+│   │   └── callback/      # OAuth callback handler
+│   ├── login/             # Login page (Google OAuth)
+│   ├── onboarding/        # New user onboarding (2-step)
 │   ├── planner/           # Planning tools page
 │   └── settings/          # Configuration page
-├── components/            # React components
+├── components/
+│   ├── AuthProvider.tsx   # Auth context (session, user, signOut)
+│   ├── DataProvider.tsx   # Data context (wraps useSyncedData)
+│   ├── ThemeProvider.tsx  # Dark mode provider
+│   ├── Navigation.tsx     # App nav + logout + avatar
 │   ├── AttendanceChart.tsx
 │   ├── AttendanceLogger.tsx
 │   ├── DashboardCard.tsx
 │   ├── LeaveSimulator.tsx
-│   ├── Navigation.tsx
 │   ├── OdTracker.tsx
 │   ├── SafeMarginCalculator.tsx
 │   ├── SemesterConfigManager.tsx
 │   ├── SubjectDetailModal.tsx
 │   ├── SubjectsManager.tsx
-│   ├── ThemeProvider.tsx
 │   └── TimetableBuilder.tsx
 ├── hooks/
-│   └── useAttendanceData.ts  # Main data hook
+│   ├── useSyncedData.ts   # ★ Main data hook (Supabase primary)
+│   ├── useSemesterData.ts # Semester-level queries + realtime
+│   └── useAttendanceData.ts # Legacy localStorage hook (deprecated)
 ├── lib/
-│   ├── calculations.ts       # All calculation logic
-│   ├── constants.ts          # App constants
-│   ├── sampleData.ts         # Initial sample data
-│   └── storage.ts            # localStorage utilities
+│   ├── calculations.ts    # All attendance calculation logic
+│   ├── constants.ts       # App constants
+│   ├── sampleData.ts      # Initial sample data
+│   ├── storage.ts         # localStorage utilities (legacy cache)
+│   └── supabase/
+│       ├── client.ts      # createBrowserClient
+│       ├── server.ts      # createServerClient (cookies)
+│       ├── middleware.ts   # Session refresh + route protection
+│       └── database.ts    # ★ CRUD for all 7 tables
 └── types/
-    └── index.ts              # TypeScript definitions
+    ├── index.ts           # App types (legacy format)
+    └── database.ts        # Supabase table types + Insert/Update
+supabase/
+    └── schema.sql         # Full database schema with RLS
 ```
 
-### Data Flow
+### Data Flow (v2.0 — Cloud-Synced Architecture)
 
 ```
-localStorage ─► loadAppData() ─► useAttendanceData() ─► Components
-                                       │
-                                       ▼
-                              saveAppData() ─► localStorage
+┌─────────────────────────────────────────────────────────────┐
+│                     User's Browser                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  layout.tsx                                                  │
+│  └── ThemeProvider                                           │
+│      └── AuthProvider  (session, user, signOut)              │
+│          └── DataProvider  (wraps useSyncedData)             │
+│              └── Navigation + <page>                         │
+│                                                              │
+│  useSyncedData()                                             │
+│  ├── Reads from Supabase (getActiveSemesterData)             │
+│  ├── Converts DB types → legacy AppData for calculations     │
+│  ├── Provides CRUD that writes to Supabase                   │
+│  └── Subscribes to realtime changes                          │
+│                                                              │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Supabase Cloud                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  auth.users  ──► profiles (1:1)                              │
+│                      │                                       │
+│                      └──► semesters (1:N, one active)        │
+│                              │                               │
+│                 ┌────────────┼────────────┬─────────┐        │
+│                 ▼            ▼            ▼         ▼        │
+│            subjects   timetable_slots  holidays  cat_periods │
+│                 │            │                               │
+│                 └────────────┘                               │
+│                       │                                      │
+│                       ▼                                      │
+│              attendance_logs                                 │
+│                                                              │
+│  RLS: Every table → user_id = auth.uid()                     │
+│  Triggers: updated_at auto-refreshed                         │
+│  Realtime: All tables broadcast changes                      │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🔐 Authentication System
+
+### Google OAuth with Domain Restriction
+
+| Aspect          | Detail                                    |
+| --------------- | ----------------------------------------- |
+| Provider        | Google OAuth 2.0 via Supabase Auth        |
+| Allowed Domain  | `@svce.ac.in` only                        |
+| Callback URL    | `/auth/callback`                          |
+| Session Storage | httpOnly cookies (Supabase SSR)           |
+| Session Refresh | Automatic via middleware on every request |
+
+### Auth Flow
+
+```
+/login  →  Google OAuth  →  /auth/callback
+                                   │
+                          Validate @svce.ac.in
+                                   │
+                        ┌──────────┴──────────┐
+                   Invalid email          Valid email
+                        │                      │
+                   Sign out +            Upsert profile
+                   show error                  │
+                                     ┌─────────┴─────────┐
+                                  New user          Existing user
+                                     │                    │
+                                /onboarding             /
+                                (create semester)
+```
+
+### Protected Routes
+
+- **Public:** `/login`, `/auth/callback`
+- **Protected:** Everything else (middleware redirects to `/login`)
+
+### Components
+
+- `AuthProvider` — React context providing `user`, `session`, `loading`, `signOut`
+- `Navigation` — Shows user avatar (from Google), logout button, hidden on `/login`
+
+---
+
+## 🗄 Database Schema
+
+### Tables (7 total)
+
+| Table             | Purpose                    | Owner Key | RLS |
+| ----------------- | -------------------------- | --------- | --- |
+| `profiles`        | User info (name, avatar)   | `id`      | ✅  |
+| `semesters`       | Semester dates & name      | `user_id` | ✅  |
+| `subjects`        | Courses per semester       | `user_id` | ✅  |
+| `timetable_slots` | Weekly period schedule     | `user_id` | ✅  |
+| `attendance_logs` | Attendance per date/period | `user_id` | ✅  |
+| `holidays`        | Holiday dates              | `user_id` | ✅  |
+| `cat_periods`     | CAT exam date ranges       | `user_id` | ✅  |
+
+### Key Constraints
+
+- `subjects` — Unique `(semester_id, subject_code)`
+- `timetable_slots` — Unique `(semester_id, day_of_week, period_number)`
+- `attendance_logs` — Unique `(semester_id, subject_id, date, period_number)`
+- `holidays` — Unique `(semester_id, date)`
+- `cat_periods` — Check `end_date >= start_date`
+
+### Indexes
+
+- `semesters` — `(user_id)`, `(user_id, is_active)`
+- `subjects` — `(semester_id)`, `(user_id)`
+- `timetable_slots` — `(semester_id)`, `(semester_id, day_of_week)`
+- `attendance_logs` — `(semester_id)`, `(semester_id, date)`, `(subject_id)`
+- `holidays` — `(semester_id)`
+- `cat_periods` — `(semester_id)`
+
+### Triggers
+
+- `updated_at` auto-set on UPDATE for: semesters, subjects, attendance_logs
+
+### Helper Functions
+
+- `get_active_semester(user_id)` — Returns active semester UUID
 
 ---
 
 ## ✅ Features Implemented
 
-### 1. Dashboard (`/`)
+### 1. Authentication & User Management
+
+- **Google OAuth** sign-in restricted to college domain
+- **Auto profile creation** from Google metadata
+- **Session persistence** across browser restarts
+- **Logout** clears session and redirects
+
+### 2. Onboarding (`/onboarding`) — NEW in v2.0
+
+- **Step 1 — Welcome:** Feature highlights (track, monitor, plan)
+- **Step 2 — Semester Setup:** Name, start date, end date
+- Creates first semester in Supabase
+- Marks profile as onboarded
+- Redirects to `/settings` for subjects & timetable
+
+### 3. Dashboard (`/`)
 
 - **Overall attendance percentage** with color-coded status
 - **Subject-wise attendance cards** with quick stats
@@ -108,7 +267,7 @@ localStorage ─► loadAppData() ─► useAttendanceData() ─► Components
 - **Subject detail modal** showing class-by-class history
 - **Dark mode support**
 
-### 2. Attendance Logging (`/attendance`)
+### 4. Attendance Logging (`/attendance`)
 
 - **Date picker** with navigation (prev/next day buttons)
 - **Timetable-based period display** for selected day
@@ -117,63 +276,55 @@ localStorage ─► loadAppData() ─► useAttendanceData() ─► Components
 - **Holiday detection** - Shows message if date is a holiday
 - **Semester bounds detection** - Warns if outside semester dates
 - **CAT exam period detection** - No classes during exams
-- **Auto-save** to localStorage
+- **Auto-sync** to Supabase on every change
 
-### 3. Planning Tools (`/planner`)
+### 5. Planning Tools (`/planner`)
 
 #### Leave Simulator
 
-- **Single day leave checkbox** - Quick toggle for single-day leaves
+- **Single day leave checkbox** for quick simulation
 - **Date range selection** with start/end dates
-- **Schedule preview** showing classes that would be missed
+- **Schedule preview** of classes that would be missed
 - **Impact calculation** showing projected attendance drop
-- **Per-subject impact** highlighting subjects at risk
-- **Holiday/CAT awareness** - Excludes non-class days from calculation
+- **Per-subject impact** highlighting at-risk subjects
+- **Holiday/CAT awareness** - Excludes non-class days
 
 #### OD Tracker
 
-- **Visual progress bar** showing OD hours used (out of 72)
+- **Visual progress bar** (used / 72 hours max)
 - **Detailed history** with expandable list
 - **Grouped by date** for easy review
 
 #### Safe Margin Calculator
 
-- **Per-subject breakdown** showing:
-  - Future sessions remaining
-  - Must attend count
-  - Can safely skip count
+- **Per-subject breakdown**: future sessions, must attend, can skip
 - **Projected totals** and minimum requirements
 - Educational disclaimer encouraging attendance
 
-### 4. Settings (`/settings`)
+### 6. Settings (`/settings`)
 
 #### Subjects Manager
 
-- **Add/edit/delete subjects**
-- **Credit options**: 0, 1.5, 2, 3, 4 credits
-- **Subject types**:
-  - Regular subjects (with code)
-  - Labs (1.5 credits, 3 consecutive periods = 1 session)
-  - Zero-credit types: Library, Seminar, VAC
-- **Unique color coding** per subject (20 colors)
+- **Add/edit/delete subjects** → saved to Supabase
+- **Credit options**: 0, 1.5, 2, 3, 4
+- **Types**: Regular, Lab (1.5cr), Library/Seminar/VAC (0cr)
+- **Unique color coding** per subject
 
 #### Timetable Builder
 
-- **Drag-and-drop** interface for desktop
-- **Tap-to-select** mode for mobile devices
+- **Drag-and-drop** (desktop) / **Tap-to-select** (mobile)
 - **7 periods × 6 days** grid (Mon-Sat)
 - **Fixed period timings** (08:30 - 15:15)
-- **Lab handling** - Auto-fills 3 consecutive periods
-- **VAC handling** - Auto-fills 2 consecutive periods
-- **Clear individual slots** or entire subject
+- **Lab handling** - 3 consecutive periods auto-fill
+- **VAC handling** - 2 consecutive periods auto-fill
 
 #### Semester Configuration
 
-- **Semester dates**: Start, End, Last instruction date
-- **Holiday management**: Add/delete holidays
-- **CAT exam periods**: Multiple CAT periods with date ranges
+- **Semester dates**: Start, end, last instruction date
+- **Holiday management**: Add/delete with descriptions
+- **CAT exam periods**: Multiple with date ranges
 
-### 5. Theme Support
+### 7. Theme Support
 
 - **Dark mode toggle** in navigation
 - **System preference detection**
@@ -183,75 +334,22 @@ localStorage ─► loadAppData() ─► useAttendanceData() ─► Components
 
 ## 📊 Data Models
 
-### Subject
+### Supabase Types (`types/database.ts`)
 
 ```typescript
-interface Subject {
-  subject_code?: string; // Optional for Library/Seminar
-  subject_name: string;
-  credits: 0 | 1.5 | 2 | 3 | 4;
-  zero_credit_type?: "library" | "seminar" | "vac";
-}
+// Key types with Insert/Update variants for each table
+interface Semester { id, user_id, name, start_date, end_date, last_instruction_date, is_active }
+interface SubjectDB { id, user_id, semester_id, subject_code, subject_name, credits, zero_credit_type }
+interface TimetableSlotDB { id, user_id, semester_id, subject_id, day_of_week, period_number, start_time, end_time }
+interface AttendanceLogDB { id, user_id, semester_id, subject_id, date, period_number, status, notes }
+interface HolidayDB { id, user_id, semester_id, date, description }
+interface CatPeriodDB { id, user_id, semester_id, name, start_date, end_date }
+interface SemesterData { semester, subjects[], timetable[], attendance[], holidays[], cat_periods[] }
 ```
 
-### TimetableSlot
+### Legacy Types (`types/index.ts`)
 
-```typescript
-interface TimetableSlot {
-  id: string;
-  day_of_week:
-    | "Monday"
-    | "Tuesday"
-    | "Wednesday"
-    | "Thursday"
-    | "Friday"
-    | "Saturday";
-  period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  subject_code?: string;
-  start_time: string; // HH:mm
-  end_time: string; // HH:mm
-}
-```
-
-### AttendanceLog
-
-```typescript
-interface AttendanceLog {
-  id: string;
-  date: string; // ISO date
-  period_number: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  subject_code?: string;
-  status: "present" | "od" | "leave";
-  notes?: string; // OD reason
-}
-```
-
-### SemesterConfig
-
-```typescript
-interface SemesterConfig {
-  start_date: string;
-  end_date: string;
-  last_instruction_date: string;
-  cat_periods?: CATExamPeriod[];
-}
-
-interface CATExamPeriod {
-  id: string;
-  name: string; // e.g., "CAT 1", "CAT 2"
-  start_date: string;
-  end_date: string;
-}
-```
-
-### Holiday
-
-```typescript
-interface Holiday {
-  date: string;
-  description: string;
-}
-```
+Still used by calculation functions. `useSyncedData` converts DB → legacy on read.
 
 ---
 
@@ -263,23 +361,15 @@ interface Holiday {
 Attendance% = (Attended Sessions / Total Scheduled Sessions) × 100
 ```
 
-**Where:**
+- Excludes: Sundays, holidays, CAT exam periods
+- Labs: 3 periods = 1 session | VAC: 2 periods = 1 session
+- OD counts as attended | Unmarked = present (default)
 
-- **Total Scheduled Sessions** = Count of scheduled classes from semester start to today
-  - Excludes: Sundays, holidays, CAT exam periods
-  - Labs: 3 periods = 1 session
-  - VAC: 2 periods = 1 session
-- **Attended Sessions** = Total - Absent (leave) count
-  - OD counts as attended
-  - Unmarked periods = present (default)
-
-### Overall Attendance (NEW FORMULA)
+### Overall Attendance
 
 ```
 Overall% = (Total Attended Periods / Total Periods) × 100
 ```
-
-**Note:** This was recently changed from average of percentages to weighted by periods.
 
 ### Status Thresholds
 
@@ -289,72 +379,88 @@ Overall% = (Total Attended Periods / Total Periods) × 100
 | Warning (Yellow) | 75-77%      | 80-82%  |
 | Danger (Red)     | <75%        | <80%    |
 
-### Safe Margin Calculation
+### Safe Margin
 
 ```
-Future Sessions = Sessions from tomorrow to semester end
-Must Attend = ceil(Projected Total × 0.75) - Already Attended
-Can Skip = Future Sessions - Must Attend
+Can Skip = Future Sessions - ceil(Projected Total × 0.75) + Already Attended
 ```
 
 ---
 
 ## 🧩 Components Breakdown
 
+### Provider Stack (layout.tsx)
+
+```
+ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
+```
+
 ### Core Components
 
-| Component               | Purpose                | Key Features                                     |
-| ----------------------- | ---------------------- | ------------------------------------------------ |
-| `useAttendanceData`     | Central data hook      | CRUD operations, calculations, localStorage sync |
-| `AttendanceLogger`      | Log daily attendance   | Status buttons, OD modal, holiday detection      |
-| `SubjectDetailModal`    | View class history     | Day-by-day breakdown, status legend              |
-| `LeaveSimulator`        | Simulate leave impact  | Date range, single-day mode, impact preview      |
-| `SafeMarginCalculator`  | Calculate skip margins | Per-subject breakdown, disclaimer                |
-| `OdTracker`             | View OD history        | Progress bar, grouped history                    |
-| `SubjectsManager`       | Manage subjects        | Add/edit/delete, credit types                    |
-| `TimetableBuilder`      | Build schedule         | Drag-drop, tap-to-select, lab handling           |
-| `SemesterConfigManager` | Configure semester     | Dates, holidays, CAT periods                     |
-| `AttendanceChart`       | Visualize attendance   | Recharts bar chart                               |
-| `DashboardCard`         | Subject card           | Percentage, status, quick stats                  |
-| `Navigation`            | App navigation         | Links, theme toggle                              |
-| `ThemeProvider`         | Theme management       | Dark mode, system preference                     |
+| Component               | Purpose              | Data Source   |
+| ----------------------- | -------------------- | ------------- |
+| `AuthProvider`          | Auth state + signOut | Supabase Auth |
+| `DataProvider`          | All app data         | useSyncedData |
+| `useSyncedData`         | CRUD + realtime      | Supabase DB   |
+| `AttendanceLogger`      | Daily attendance     | useData()     |
+| `LeaveSimulator`        | Leave impact         | useData()     |
+| `SafeMarginCalculator`  | Skip margins         | useData()     |
+| `OdTracker`             | OD history           | useData()     |
+| `SubjectsManager`       | Subject CRUD         | useData()     |
+| `TimetableBuilder`      | Schedule builder     | useData()     |
+| `SemesterConfigManager` | Semester config      | useData()     |
+
+---
+
+## 📈 Migration Phases
+
+### ✅ Phase 0 — Auth Foundation (COMPLETE)
+
+- Supabase Auth with Google OAuth
+- Domain restriction to `@svce.ac.in`
+- Login page, callback, middleware
+- AuthProvider, route protection, logout
+
+### ✅ Phase 1 — Multi-User Data Model (COMPLETE)
+
+- 7 tables with RLS policies
+- TypeScript types + Insert/Update variants
+- CRUD functions in `database.ts`
+- Indexes and triggers
+
+### ✅ Phase 3 — Sync Layer (COMPLETE)
+
+- `useSyncedData` hook as primary data source
+- `DataProvider` context wrapping entire app
+- All pages migrated from `useAttendanceData` → `useData`
+- Realtime subscriptions for live updates
+- Onboarding flow creates first semester
+- DB types ↔ legacy types conversion layer
+
+### 🔜 Phase 2 — Timetable Templates (NOT STARTED)
+
+- Template tables + sharing
+- Viral adoption: one student sets → class imports
+
+### 🔜 Phase 4+ — Future
+
+- PWA + offline mode
+- Analytics dashboard
+- Admin panel
 
 ---
 
 ## ⚠️ Known Limitations
 
-1. **No Backend/Cloud Sync**
-   - All data stored in browser localStorage
-   - Data lost if browser storage cleared
-   - No cross-device sync
-
-2. **No Export/Import UI**
-   - Export/import functions exist in code but no UI
-   - Data backup requires manual JSON extraction
-
-3. **No User Authentication**
-   - Single user only
-   - No multi-user support
-
-4. **Limited Mobile Experience**
-   - Timetable builder works via tap-to-select
-   - Some tables may overflow on small screens
-
-5. **No Notifications/Reminders**
-   - No alerts for low attendance
-   - No reminders to log attendance
-
-6. **No PWA Support**
-   - Not installable as app
-   - No offline support beyond localStorage
-
-7. **Fixed Period Timings**
-   - Period times hardcoded (08:30 - 15:15)
-   - Cannot customize period durations
-
-8. **No Undo/Redo**
-   - Actions are immediate
-   - No history tracking
+1. ~~**No Backend/Cloud Sync**~~ ✅ RESOLVED
+2. ~~**No User Authentication**~~ ✅ RESOLVED
+3. **Limited Offline Support** — Requires internet for all operations
+4. **No Export/Import UI** — Functions exist but no UI
+5. **Limited Mobile Experience** — Tables may overflow on small screens
+6. **No Notifications** — No alerts or reminders
+7. **No PWA Support** — Not installable
+8. **Fixed Period Timings** — Hardcoded 08:30 - 15:15
+9. **No Undo/Redo** — Actions are immediate
 
 ---
 
@@ -362,114 +468,82 @@ Can Skip = Future Sessions - Must Attend
 
 ### High Priority
 
-1. **Data Export/Import UI**
-   - Add export button to download JSON
-   - Add import button to restore from file
-   - CSV export for spreadsheets
-
-2. **PWA Support**
-   - Service worker for offline access
-   - Installable on mobile devices
-   - Push notifications
-
-3. **Attendance Trends**
-   - Weekly/monthly trend charts
-   - Attendance heatmap calendar
-   - Subject comparison graphs
-
-4. **Backup & Restore**
-   - Automatic localStorage backup
-   - One-click restore
-   - Export to cloud (optional)
+1. **PWA + Offline Mode** — Service worker, sync queue
+2. **Timetable Templates (Phase 2)** — Viral class-wide sharing
+3. **Data Export UI** — Download/restore JSON
 
 ### Medium Priority
 
-5. **Calendar View**
-   - Month calendar showing attendance
-   - Click date to log/view
-   - Holiday highlighting
+4. **Calendar View** — Monthly attendance view
+5. **Smart Suggestions** — "You can skip X more this week"
+6. **Semester Archives** — Historical comparison
+7. **Customizable Period Timings**
 
-6. **Smart Suggestions**
-   - "You can skip X more classes this week"
-   - "Attend next 3 classes to reach 75%"
-   - Risk alerts before attendance drops
+### Low Priority
 
-7. **Multiple Semester Support**
-   - Archive past semesters
-   - Historical comparison
-   - Semester templates
-
-8. **Customizable Period Timings**
-   - Edit period start/end times
-   - Support different day schedules
-   - Lunch break configuration
-
-### Low Priority / Nice-to-Have
-
-9. **Widget/Quick Actions**
-   - Quick "mark present" from home screen
-   - Today's schedule widget
-   - Attendance summary widget
-
-10. **Gamification**
-    - Streak tracking (days of 100% attendance)
-    - Achievement badges
-    - Attendance goals
-
-11. **Analytics Dashboard**
-    - Most missed subject
-    - Best attendance day of week
-    - OD usage patterns
-
-12. **Accessibility Improvements**
-    - Screen reader support
-    - Keyboard navigation
-    - High contrast mode
-
-13. **Localization**
-    - Multiple language support
-    - Date format preferences
-    - Regional calendars
-
-14. **Integration Options**
-    - Google Calendar sync
-    - iCal export
-    - College ERP import (if API available)
+8. **Gamification** — Streaks, badges
+9. **Analytics** — Patterns, trends
+10. **Accessibility** — Screen reader, keyboard nav
+11. **Integrations** — Google Calendar, iCal
 
 ---
 
 ## 📁 File Reference
 
-| File                                       | Lines | Purpose                     |
-| ------------------------------------------ | ----- | --------------------------- |
-| `src/lib/calculations.ts`                  | ~387  | All attendance calculations |
-| `src/hooks/useAttendanceData.ts`           | ~378  | Main data management hook   |
-| `src/components/TimetableBuilder.tsx`      | ~625  | Timetable UI                |
-| `src/components/AttendanceLogger.tsx`      | ~500  | Attendance logging UI       |
-| `src/components/LeaveSimulator.tsx`        | ~476  | Leave simulation            |
-| `src/components/SubjectsManager.tsx`       | ~375  | Subject management          |
-| `src/app/settings/page.tsx`                | ~362  | Settings page               |
-| `src/app/page.tsx`                         | ~355  | Dashboard                   |
-| `src/components/SemesterConfigManager.tsx` | ~286  | Semester config             |
-| `src/app/attendance/page.tsx`              | ~286  | Attendance page             |
-| `src/components/SubjectDetailModal.tsx`    | ~260  | Subject history modal       |
-| `src/components/OdTracker.tsx`             | ~247  | OD tracking                 |
-| `src/app/planner/page.tsx`                 | ~231  | Planning tools page         |
-| `src/components/SafeMarginCalculator.tsx`  | ~158  | Safe margin calc            |
+| File                              | Purpose                          |
+| --------------------------------- | -------------------------------- |
+| `src/hooks/useSyncedData.ts`      | ★ Main data hook (Supabase)      |
+| `src/lib/supabase/database.ts`    | ★ CRUD for all tables            |
+| `src/components/DataProvider.tsx` | ★ Data context for all pages     |
+| `src/components/AuthProvider.tsx` | Auth context (session, user)     |
+| `src/lib/supabase/client.ts`      | Browser Supabase client          |
+| `src/lib/supabase/server.ts`      | Server Supabase client           |
+| `src/lib/supabase/middleware.ts`  | Session refresh + protection     |
+| `src/middleware.ts`               | Route protection                 |
+| `src/app/login/page.tsx`          | Google OAuth login page          |
+| `src/app/auth/callback/route.ts`  | OAuth callback + domain check    |
+| `src/app/onboarding/page.tsx`     | New user onboarding (2-step)     |
+| `src/lib/calculations.ts`         | All attendance calculations      |
+| `src/types/database.ts`           | Supabase table types             |
+| `src/types/index.ts`              | Legacy app types                 |
+| `supabase/schema.sql`             | Full DB schema with RLS          |
+| `src/hooks/useAttendanceData.ts`  | Legacy hook (deprecated)         |
+| `src/lib/storage.ts`              | Legacy localStorage (deprecated) |
 
 ---
 
-## 🔧 Recent Changes
+## 🔧 Changelog
 
-1. **Overall Attendance Formula** - Changed from average of percentages to attended/total periods
-2. **Single Day Leave Checkbox** - Added to Leave Simulator
-3. **Mobile Tap-to-Select** - Added for TimetableBuilder
-4. **Invalid Date Guards** - Fixed production crashes from empty dates
-5. **2 Credits Option** - Added as valid credit type
-6. **Dark Mode** - Full dark mode support
-7. **OD Tracking** - Complete OD management with history
-8. **CAT Exam Periods** - Exclude exam periods from attendance calculation
+### v2.0.0 — Multi-User Cloud Platform (Feb 8, 2026)
+
+- **Phase 0:** Supabase Auth + Google OAuth with `@svce.ac.in` restriction
+- **Phase 1:** 7 Supabase tables with RLS, TypeScript types, CRUD functions
+- **Phase 3:** `useSyncedData` replaces localStorage, `DataProvider` context, realtime subscriptions
+- **Onboarding:** Two-step flow (welcome → create semester → settings)
+- **All pages** now read/write from Supabase
+
+### v1.3.0 — Feature Additions
+
+- Overall attendance formula: attended/total periods (was avg of %)
+- Single day leave checkbox in Leave Simulator
+- Mobile tap-to-select in TimetableBuilder
+- Invalid date guards
+
+### v1.0.0 — Initial Release
+
+- Full attendance tracking with localStorage
+- Dashboard, logging, planner, settings
+- Dark mode, OD tracking, CAT periods
 
 ---
 
-_This document serves as a comprehensive reference for the current state of the project. Use it to identify areas for improvement and plan future development._
+## 🔑 Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+---
+
+_This document serves as a comprehensive reference for the current state of the project. Last updated after Phase 3 (Sync Layer) completion._

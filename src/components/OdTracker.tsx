@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 
 // Icons
 const ChevronDownIcon = ({ className }: { className?: string }) => (
@@ -30,7 +30,7 @@ const ClipboardListIcon = ({ className }: { className?: string }) => (
 );
 
 export const OdTracker = () => {
-  const { data, getODHours } = useAttendanceData();
+  const { data, getODHours } = useData();
   const [showDetails, setShowDetails] = useState(false);
 
   if (!data) {

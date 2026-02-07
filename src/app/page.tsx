@@ -1,6 +1,6 @@
 'use client';
 
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import { DashboardCard } from '@/components/DashboardCard';
 import { SubjectDetailModal } from '@/components/SubjectDetailModal';
 import { AttendanceChart } from '@/components/AttendanceChart';
@@ -9,7 +9,7 @@ import { OverallStats, AttendanceStats } from '@/types';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  const { data, loading, getStats } = useAttendanceData();
+  const { data, loading, getStats } = useData();
   const [stats, setStats] = useState<{
     overall_stats: OverallStats;
     subject_stats: AttendanceStats[];

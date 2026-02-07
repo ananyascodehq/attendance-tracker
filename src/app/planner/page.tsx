@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import { LeaveSimulator } from '@/components/LeaveSimulator';
 import { OdTracker } from '@/components/OdTracker';
 import { SafeMarginCalculator } from '@/components/SafeMarginCalculator';
@@ -103,7 +103,7 @@ const tools: ToolConfig[] = [
 ];
 
 export default function PlannerPage() {
-  const { data, loading } = useAttendanceData();
+  const { data, loading } = useData();
   const [expandedTool, setExpandedTool] = useState<ToolId | null>('leave');
 
   if (loading) {

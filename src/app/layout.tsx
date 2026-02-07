@@ -3,6 +3,7 @@ import './globals.css';
 import Navigation from '@/components/Navigation';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
+import { DataProvider } from '@/components/DataProvider';
 
 export const metadata: Metadata = {
   title: 'Attendance Tracker',
@@ -19,11 +20,13 @@ export default function RootLayout({
       <body className="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         <ThemeProvider>
           <AuthProvider>
-            <Navigation />
+            <DataProvider>
+              <Navigation />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {children}
-            </main>
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {children}
+              </main>
+            </DataProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

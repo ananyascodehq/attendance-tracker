@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import SubjectsManager from '@/components/SubjectsManager';
 import TimetableBuilder from '@/components/TimetableBuilder';
 import SemesterConfigManager from '@/components/SemesterConfigManager';
@@ -103,7 +103,7 @@ const tabs: TabConfig[] = [
 
 export default function SettingsPage() {
   const { data, loading, updateAllSubjects, updateAllTimetable, updateSemesterConfig, updateAllHolidays, clearAllData } =
-    useAttendanceData();
+    useData();
   const [activeTab, setActiveTab] = useState<TabId>('subjects');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);

@@ -14,25 +14,25 @@
 
 ### Database
 
-- [ ] Create `profiles` table
-- [ ] Add columns:
-  - [ ] id (uuid, pk, auth.users ref)
-  - [ ] email
-  - [ ] full_name
-  - [ ] avatar_url
-  - [ ] onboarded (boolean default false)
-  - [ ] created_at
-- [ ] Enable RLS
-- [ ] Add policies:
-  - [ ] select own profile
-  - [ ] insert own profile
-  - [ ] update own profile
+- [x] Create `profiles` table
+- [x] Add columns:
+  - [x] id (uuid, pk, auth.users ref)
+  - [x] email
+  - [x] full_name
+  - [x] avatar_url
+  - [x] onboarded (boolean default false)
+  - [x] created_at
+- [x] Enable RLS
+- [x] Add policies:
+  - [x] select own profile
+  - [x] insert own profile
+  - [x] update own profile
 
 ### Google OAuth
 
-- [ ] Configure Google provider in Supabase
-- [ ] Add redirect URL
-- [ ] Restrict to `svce.ac.in` domain
+- [x] Configure Google provider in Supabase
+- [x] Add redirect URL
+- [x] Restrict to `svce.ac.in` domain
 
 ### Auth Pages
 
@@ -131,30 +131,34 @@ One student sets timetable → whole class imports.
 
 ---
 
-## Phase 3 — Sync Layer
+## Phase 3 — Sync Layer ✅
 
 ### Replace localStorage as source of truth
 
-- [ ] DB becomes primary storage
-- [ ] local cache only
-- [ ] optimistic UI updates
-- [ ] sync queue
+- [x] DB becomes primary storage
+- [x] `useSyncedData` hook replaces localStorage-based `useAttendanceData`
+- [x] `DataProvider` context wraps all pages
+- [x] All components migrated to `useData()` from DataProvider
+- [x] Realtime subscriptions for live updates
+- [x] DB types ↔ legacy types conversion layer
 
 ### Conflict strategy
 
-- [ ] last write wins
-- [ ] dedupe attendance logs
+- [x] last write wins (Supabase upsert)
+- [x] dedupe attendance logs (unique constraint on semester_id, subject_id, date, period_number)
 
 ---
 
-## Phase 4 — Onboarding Flow
+## Phase 4 — Onboarding Flow (Partial ✅)
 
 ### After first login
 
-- [ ] choose department
-- [ ] choose semester
-- [ ] import timetable template
-- [ ] ready dashboard
+- [ ] choose department (future — Phase 2 templates)
+- [x] create semester (name, start/end dates)
+- [ ] import timetable template (future — Phase 2 templates)
+- [x] redirect to /settings for subject & timetable setup
+- [x] 2-step onboarding UI (welcome → semester setup)
+- [x] profile marked as onboarded
 
 Target: onboarding < 60 seconds.
 

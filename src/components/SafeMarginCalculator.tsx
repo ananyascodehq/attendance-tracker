@@ -1,6 +1,6 @@
 'use client';
 
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import Link from 'next/link';
 
 // Icons
@@ -19,7 +19,7 @@ const AcademicCapIcon = ({ className }: { className?: string }) => (
 );
 
 export const SafeMarginCalculator = () => {
-  const { data, getStats, getSafeMargin } = useAttendanceData();
+  const { data, getStats, getSafeMargin } = useData();
 
   if (!data || data.subjects.length === 0) {
     return (

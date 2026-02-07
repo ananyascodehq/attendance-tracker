@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useAttendanceData } from '@/hooks/useAttendanceData';
+import { useData } from '@/components/DataProvider';
 import { AttendanceLogger } from '@/components/AttendanceLogger';
 import Link from 'next/link';
 
@@ -43,8 +43,8 @@ const CheckCircleIcon = ({ className }: { className?: string }) => (
 );
 
 export default function AttendancePage() {
-  const { data, loading, getTodayISO, addAttendanceLog, deleteAttendanceLog, markDayAsLeave } =
-    useAttendanceData();
+  const { data, loading, getTodayISO, addAttendanceLog, deleteAttendanceLog } =
+    useData();
   const [selectedDate, setSelectedDate] = useState(getTodayISO());
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
