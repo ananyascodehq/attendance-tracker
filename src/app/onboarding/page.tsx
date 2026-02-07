@@ -54,8 +54,9 @@ export default function OnboardingPage() {
       // Redirect to settings to set up subjects and timetable
       router.push('/settings');
     } catch (error) {
-      console.error('Error during onboarding:', error);
-      alert('Something went wrong. Please try again.');
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error during onboarding:', message, error);
+      alert(`Something went wrong: ${message}`);
     } finally {
       setLoading(false);
     }

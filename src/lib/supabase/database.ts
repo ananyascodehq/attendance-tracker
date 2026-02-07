@@ -23,6 +23,13 @@ import type {
 
 const supabase = createClient();
 
+// Helper: get authenticated user ID (required for all inserts)
+async function getUserId(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user.id;
+}
+
 // =============================================
 // SEMESTER OPERATIONS
 // =============================================
@@ -49,20 +56,19 @@ export async function getActiveSemester(): Promise<Semester | null> {
 }
 
 export async function createSemester(semester: SemesterInsert): Promise<Semester> {
+  const userId = await getUserId();
+
   // First deactivate all other semesters if this one is active
   if (semester.is_active !== false) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from('semesters')
-        .update({ is_active: false })
-        .eq('user_id', user.id);
-    }
+    await supabase
+      .from('semesters')
+      .update({ is_active: false })
+      .eq('user_id', userId);
   }
 
   const { data, error } = await supabase
     .from('semesters')
-    .insert({ ...semester, is_active: semester.is_active ?? true })
+    .insert({ ...semester, user_id: userId, is_active: semester.is_active ?? true })
     .select()
     .single();
 
@@ -73,14 +79,12 @@ export async function createSemester(semester: SemesterInsert): Promise<Semester
 export async function updateSemester(id: string, updates: SemesterUpdate): Promise<Semester> {
   // If setting active, deactivate others first
   if (updates.is_active === true) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from('semesters')
-        .update({ is_active: false })
-        .eq('user_id', user.id)
-        .neq('id', id);
-    }
+    const userId = await getUserId();
+    await supabase
+      .from('semesters')
+      .update({ is_active: false })
+      .eq('user_id', userId)
+      .neq('id', id);
   }
 
   const { data, error } = await supabase
@@ -119,9 +123,10 @@ export async function getSubjects(semesterId: string): Promise<SubjectDB[]> {
 }
 
 export async function createSubject(subject: SubjectInsert): Promise<SubjectDB> {
+  const userId = await getUserId();
   const { data, error } = await supabase
     .from('subjects')
-    .insert(subject)
+    .insert({ ...subject, user_id: userId })
     .select()
     .single();
 
@@ -167,6 +172,8 @@ export async function getTimetable(semesterId: string): Promise<TimetableSlotDB[
 }
 
 export async function upsertTimetableSlot(slot: TimetableSlotInsert): Promise<TimetableSlotDB> {
+  const userId = await getUserId();
+
   // Check if slot exists
   const { data: existing } = await supabase
     .from('timetable_slots')
@@ -195,7 +202,7 @@ export async function upsertTimetableSlot(slot: TimetableSlotInsert): Promise<Ti
     // Insert new
     const { data, error } = await supabase
       .from('timetable_slots')
-      .insert(slot)
+      .insert({ ...slot, user_id: userId })
       .select()
       .single();
 
@@ -257,6 +264,8 @@ export async function getAttendanceByDateRange(
 }
 
 export async function logAttendance(log: AttendanceLogInsert): Promise<AttendanceLogDB> {
+  const userId = await getUserId();
+
   // Check if log exists for this subject/date/period
   const { data: existing } = await supabase
     .from('attendance_logs')
@@ -285,7 +294,7 @@ export async function logAttendance(log: AttendanceLogInsert): Promise<Attendanc
     // Insert new
     const { data, error } = await supabase
       .from('attendance_logs')
-      .insert(log)
+      .insert({ ...log, user_id: userId })
       .select()
       .single();
 
@@ -319,9 +328,10 @@ export async function getHolidays(semesterId: string): Promise<HolidayDB[]> {
 }
 
 export async function addHoliday(holiday: HolidayInsert): Promise<HolidayDB> {
+  const userId = await getUserId();
   const { data, error } = await supabase
     .from('holidays')
-    .insert(holiday)
+    .insert({ ...holiday, user_id: userId })
     .select()
     .single();
 
@@ -366,9 +376,10 @@ export async function getCatPeriods(semesterId: string): Promise<CatPeriodDB[]> 
 }
 
 export async function addCatPeriod(period: CatPeriodInsert): Promise<CatPeriodDB> {
+  const userId = await getUserId();
   const { data, error } = await supabase
     .from('cat_periods')
-    .insert(period)
+    .insert({ ...period, user_id: userId })
     .select()
     .single();
 
