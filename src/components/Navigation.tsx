@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from './ThemeProvider';
+import { useAuth } from './AuthProvider';
+
+// Logout icon
+const LogoutIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+);
 
 // Theme toggle icons
 const SunIcon = ({ className }: { className?: string }) => (
@@ -72,8 +80,14 @@ interface QuickStats {
 export default function Navigation() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
+
+  // Don't render nav on login page
+  if (pathname === '/login' || pathname === '/auth/callback') {
+    return null;
+  }
 
   useEffect(() => {
     // Load quick stats from localStorage
@@ -212,6 +226,36 @@ export default function Navigation() {
                 <MoonIcon className="w-5 h-5" />
               )}
             </button>
+
+            {/* User Avatar & Logout */}
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700">
+                  {user.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt="Profile" 
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm text-gray-700 dark:text-gray-200 hidden lg:block max-w-[120px] truncate">
+                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </span>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogoutIcon className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -292,6 +336,40 @@ export default function Navigation() {
                     {quickStats.subjectsAtRisk} at risk
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile User & Logout */}
+          {user && (
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {user.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                >
+                  <LogoutIcon className="w-4 h-4" />
+                  Sign out
+                </button>
               </div>
             </div>
           )}

@@ -293,3 +293,6 @@ Code follows SPEC — never the reverse.
 ---
 
 *End of SPEC*
+
+
+---ignore: hetnefS/.f/E?G9----

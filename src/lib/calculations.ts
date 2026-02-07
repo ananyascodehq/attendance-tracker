@@ -197,17 +197,22 @@ export const calculatePerSubjectAttendance = (
   };
 };
 
-// SPEC 5.2: Calculate overall attendance (flat average across all subjects)
+// SPEC 5.2: Calculate overall attendance (attended periods / total periods * 100)
 export const calculateOverallAttendance = (
   subjectStats: Array<{
     percentage: number;
     total_sessions: number;
+    attended_sessions: number;
   }>
 ): number => {
   if (subjectStats.length === 0) return 100;
 
-  const sum = subjectStats.reduce((acc, stat) => acc + stat.percentage, 0);
-  return Math.round(sum / subjectStats.length);
+  const totalPeriods = subjectStats.reduce((acc, stat) => acc + stat.total_sessions, 0);
+  const attendedPeriods = subjectStats.reduce((acc, stat) => acc + stat.attended_sessions, 0);
+  
+  if (totalPeriods === 0) return 100;
+  
+  return Math.round((attendedPeriods / totalPeriods) * 100);
 };
 
 // SPEC 5.3: Calculate OD periods used and remaining
@@ -362,6 +367,7 @@ export const calculateOverallStats = (
     subject_stats.map((s) => ({
       percentage: s.percentage,
       total_sessions: s.total_sessions,
+      attended_sessions: s.attended_sessions,
     }))
   );
 
