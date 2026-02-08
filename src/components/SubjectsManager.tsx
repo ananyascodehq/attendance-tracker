@@ -153,6 +153,15 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
       return;
     }
 
+    // Check for duplicate library/seminar (only one of each allowed)
+    if (newSubject.credits === 0 && (newSubject.zero_credit_type === 'library' || newSubject.zero_credit_type === 'seminar')) {
+      const existingType = subjects.find(s => s.zero_credit_type === newSubject.zero_credit_type);
+      if (existingType) {
+        alert(`A ${newSubject.zero_credit_type} entry already exists`);
+        return;
+      }
+    }
+
     // For 0-credit library/seminar without code, use subject name as identifier
     const subjectToAdd: Subject = newSubject.credits === 0 && !newSubject.subject_code
       ? { subject_name: effectiveName, subject_code: undefined, credits: 0, zero_credit_type: newSubject.zero_credit_type }
@@ -162,18 +171,28 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
     setNewSubject({ subject_code: '', subject_name: '', credits: 3, zero_credit_type: 'library' });
   };
 
-  const handleDelete = (identifier: string | undefined) => {
-    const subject = subjects.find(s => s.subject_code === identifier);
-    const displayName = subject?.subject_name || identifier || 'Subject';
+  // Helper to get unique identifier for a subject
+  const getSubjectId = (subject: Subject): string => {
+    if (subject.subject_code) return subject.subject_code;
+    if (subject.zero_credit_type === 'library' || subject.zero_credit_type === 'seminar') {
+      return `__${subject.zero_credit_type}__`;
+    }
+    return subject.subject_name;
+  };
+
+  const handleDelete = (subject: Subject) => {
+    const displayName = subject.subject_name || subject.subject_code || 'Subject';
     if (confirm(`Delete subject ${displayName}?`)) {
-      onUpdate(subjects.filter(s => s.subject_code !== identifier));
+      const idToDelete = getSubjectId(subject);
+      onUpdate(subjects.filter(s => getSubjectId(s) !== idToDelete));
     }
   };
 
-  const handleEdit = (identifier: string | undefined, field: string, value: any) => {
+  const handleEdit = (subject: Subject, field: string, value: any) => {
+    const idToEdit = getSubjectId(subject);
     onUpdate(
       subjects.map(s =>
-        s.subject_code === identifier ? { ...s, [field]: value } : s
+        getSubjectId(s) === idToEdit ? { ...s, [field]: value } : s
       )
     );
   };
@@ -309,7 +328,7 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
                         {subject.subject_code || '—'}
                       </span>
                       <button
-                        onClick={() => handleDelete(subject.subject_code)}
+                        onClick={() => handleDelete(subject)}
                         className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
                         title="Delete subject"
                       >
@@ -322,7 +341,7 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
                       type="text"
                       value={subject.subject_name}
                       onChange={(e) =>
-                        handleEdit(subject.subject_code, 'subject_name', e.target.value)
+                        handleEdit(subject, 'subject_name', e.target.value)
                       }
                       className={`w-full bg-transparent border-none font-semibold text-gray-900 dark:text-white text-lg focus:outline-none focus:ring-2 focus:ring-white/50 rounded px-1 -ml-1`}
                     />
@@ -332,7 +351,7 @@ export default function SubjectsManager({ subjects, onUpdate }: SubjectsManagerP
                       <select
                         value={subject.credits}
                         onChange={(e) =>
-                          handleEdit(subject.subject_code, 'credits', parseFloat(e.target.value))
+                          handleEdit(subject, 'credits', parseFloat(e.target.value))
                         }
                         className={`${color.badge} text-xs font-semibold rounded-full px-3 py-1 border-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50`}
                       >
