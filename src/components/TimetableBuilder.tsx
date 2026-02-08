@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { TimetableSlot, Subject } from '@/types';
 
 interface TimetableBuilderProps {
@@ -97,39 +97,37 @@ export default function TimetableBuilder({
   subjects,
   onUpdate,
 }: TimetableBuilderProps) {
-  // ── Local draft state (only saved on explicit Save) ──
+  // ── Local draft state with autosave ──
   const [draft, setDraft] = useState<TimetableSlot[]>(timetable);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLocalChange = useRef(false);
 
   // Sync draft when props change externally (e.g. initial load, realtime update)
   useEffect(() => {
-    if (!hasChanges) {
+    if (!isLocalChange.current) {
       setDraft(timetable);
     }
-  }, [timetable, hasChanges]);
+    isLocalChange.current = false;
+  }, [timetable]);
 
-  // Wrapper: update draft locally (not Supabase)
+  // Wrapper: update draft locally and autosave after debounce
   const updateDraft = useCallback((updated: TimetableSlot[]) => {
     setDraft(updated);
-    setHasChanges(true);
+    isLocalChange.current = true;
+
+    // Debounce autosave (800ms after last change)
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onUpdate(updated);
+    }, 800);
+  }, [onUpdate]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, []);
-
-  const handleSave = useCallback(async () => {
-    setSaving(true);
-    try {
-      onUpdate(draft);
-      setHasChanges(false);
-    } finally {
-      // Small delay so the user sees feedback
-      setTimeout(() => setSaving(false), 400);
-    }
-  }, [draft, onUpdate]);
-
-  const handleDiscard = useCallback(() => {
-    setDraft(timetable);
-    setHasChanges(false);
-  }, [timetable]);
 
   const [draggedData, setDraggedData] = useState<DraggedData | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
@@ -384,40 +382,7 @@ export default function TimetableBuilder({
         </ul>
       </div>
 
-      {/* Save / Discard bar */}
-      {hasChanges && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-3 flex items-center justify-between gap-3 animate-in">
-          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            You have unsaved changes
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDiscard}
-              className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            >
-              Discard
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-1.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white spinner-smooth" />
-                  Saving…
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  Save Timetable
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Autosave indicator is handled by the parent Settings page */}
 
       {/* Selected Subject Indicator for Mobile */}
       {selectedSubject && (
