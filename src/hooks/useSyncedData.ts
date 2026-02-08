@@ -159,8 +159,8 @@ export function useSyncedData(): UseSyncedDataResult {
   // Cache for subject lookups
   const subjectMapRef = useRef<Map<string, SubjectDB>>(new Map());
 
-  // Load all data
-  const loadData = useCallback(async () => {
+  // Load all data (showLoading: false for background refreshes after mutations)
+  const loadData = useCallback(async (showLoading = true) => {
     if (!user) {
       setSemesterData(null);
       setSemesters([]);
@@ -169,7 +169,7 @@ export function useSyncedData(): UseSyncedDataResult {
     }
 
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError(null);
 
       const [allSemesters, activeData] = await Promise.all([
@@ -209,11 +209,11 @@ export function useSyncedData(): UseSyncedDataResult {
 
     const channel = supabase
       .channel(`semester-${semesterId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `semester_id=eq.${semesterId}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'timetable_slots', filter: `semester_id=eq.${semesterId}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `semester_id=eq.${semesterId}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'holidays', filter: `semester_id=eq.${semesterId}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cat_periods', filter: `semester_id=eq.${semesterId}` }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `semester_id=eq.${semesterId}` }, () => loadData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'timetable_slots', filter: `semester_id=eq.${semesterId}` }, () => loadData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `semester_id=eq.${semesterId}` }, () => loadData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'holidays', filter: `semester_id=eq.${semesterId}` }, () => loadData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cat_periods', filter: `semester_id=eq.${semesterId}` }, () => loadData(false))
       .subscribe();
 
     return () => {
@@ -538,7 +538,7 @@ export function useSyncedData(): UseSyncedDataResult {
       }
     }
 
-    await loadData();
+    await loadData(false);
   }, [semesterData, loadData]);
 
   const updateAllTimetable = useCallback(async (timetable: TimetableSlot[]) => {
@@ -567,7 +567,7 @@ export function useSyncedData(): UseSyncedDataResult {
       });
     }
 
-    await loadData();
+    await loadData(false);
   }, [semesterData, loadData]);
 
   const updateAllHolidays = useCallback(async (holidays: Holiday[]) => {
@@ -597,7 +597,7 @@ export function useSyncedData(): UseSyncedDataResult {
       }
     }
 
-    await loadData();
+    await loadData(false);
   }, [semesterData, loadData]);
 
   const clearAllData = useCallback(async () => {
