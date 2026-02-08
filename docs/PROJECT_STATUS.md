@@ -521,7 +521,7 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 - **SubjectsManager:** Added duplicate check for library/seminar entries
 - **SubjectsManager:** Added `getSubjectId()` helper for unique identification
 - **useSyncedData:** Fixed loading screen flicker on autosave
-  - Added `showLoading` parameter to `loadData()` 
+  - Added `showLoading` parameter to `loadData()`
   - Mutations now use silent background refresh `loadData(false)`
   - Real-time subscriptions also use silent refresh
 
