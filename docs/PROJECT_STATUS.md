@@ -514,6 +514,17 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 
 ## 🔧 Changelog
 
+### v2.0.1 — Bug Fixes (Feb 8, 2026)
+
+- **SubjectsManager:** Fixed library/seminar deletion bug (was deleting ALL subjects without code)
+- **SubjectsManager:** Fixed library/seminar editing (edits failed silently)
+- **SubjectsManager:** Added duplicate check for library/seminar entries
+- **SubjectsManager:** Added `getSubjectId()` helper for unique identification
+- **useSyncedData:** Fixed loading screen flicker on autosave
+  - Added `showLoading` parameter to `loadData()` 
+  - Mutations now use silent background refresh `loadData(false)`
+  - Real-time subscriptions also use silent refresh
+
 ### v2.0.0 — Multi-User Cloud Platform (Feb 8, 2026)
 
 - **Phase 0:** Supabase Auth + Google OAuth with `@svce.ac.in` restriction
