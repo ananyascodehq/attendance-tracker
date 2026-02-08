@@ -180,11 +180,16 @@ export function useSyncedData(): UseSyncedDataResult {
       setSemesters(allSemesters);
       setSemesterData(activeData);
 
-      // Build subject lookup map
+      // Build subject lookup map (by code, or by zero_credit_type for library/seminar)
       if (activeData) {
         const map = new Map<string, SubjectDB>();
         activeData.subjects.forEach(s => {
-          if (s.subject_code) map.set(s.subject_code, s);
+          if (s.subject_code) {
+            map.set(s.subject_code, s);
+          } else if (s.zero_credit_type === 'library' || s.zero_credit_type === 'seminar') {
+            // Use __library__ or __seminar__ as key for subjects without code
+            map.set(`__${s.zero_credit_type}__`, s);
+          }
         });
         subjectMapRef.current = map;
       }
@@ -507,19 +512,30 @@ export function useSyncedData(): UseSyncedDataResult {
   const updateAllSubjects = useCallback(async (subjects: Subject[]) => {
     if (!semesterData) return;
 
-    const existingCodes = new Set(semesterData.subjects.map(s => s.subject_code).filter(Boolean));
-    const newCodes = new Set(subjects.map(s => s.subject_code).filter(Boolean));
+    // Helper to get unique key for a subject
+    const getSubjectKey = (s: { subject_code?: string | null; zero_credit_type?: string | null }): string | null => {
+      if (s.subject_code) return s.subject_code;
+      if (s.zero_credit_type === 'library' || s.zero_credit_type === 'seminar') {
+        return `__${s.zero_credit_type}__`;
+      }
+      return null;
+    };
 
-    // Delete removed subjects
+    const newKeys = new Set(subjects.map(s => getSubjectKey(s)).filter(Boolean));
+
+    // Delete removed subjects (including library/seminar)
     for (const existing of semesterData.subjects) {
-      if (existing.subject_code && !newCodes.has(existing.subject_code)) {
+      const existingKey = getSubjectKey(existing);
+      if (existingKey && !newKeys.has(existingKey)) {
         await db.deleteSubject(existing.id);
       }
     }
 
     // Add/update subjects
     for (const subject of subjects) {
-      const existing = subjectMapRef.current.get(subject.subject_code || '');
+      const subjectKey = getSubjectKey(subject);
+      const existing = subjectKey ? subjectMapRef.current.get(subjectKey) : null;
+      
       if (existing) {
         await db.updateSubject(existing.id, {
           subject_code: subject.subject_code || null,
