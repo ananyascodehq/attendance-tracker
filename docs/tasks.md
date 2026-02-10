@@ -51,13 +51,14 @@
   - [x] `/onboarding` if new
   - [x] `/` if existing
 
-### Middleware
+### Proxy (Route Protection)
 
 - [x] Protect all routes except:
   - [x] /login
   - [x] /auth/callback
 - [x] Block unauthenticated users
 - [x] Enforce domain again
+- [x] Migrated middleware.ts → proxy.ts for Next.js 16
 
 ### Session Handling
 

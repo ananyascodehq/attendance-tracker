@@ -1,7 +1,7 @@
 # Campus Attendance Tracker - Project Status Document
 
-**Version:** 2.0.0  
-**Last Updated:** February 8, 2026  
+**Version:** 2.0.2  
+**Last Updated:** February 10, 2026  
 **Status:** Multi-User Platform (Cloud-Synced)
 
 ---
@@ -101,7 +101,7 @@ src/
 │   └── supabase/
 │       ├── client.ts      # createBrowserClient
 │       ├── server.ts      # createServerClient (cookies)
-│       ├── middleware.ts   # Session refresh + route protection
+│       ├── middleware.ts  # Session refresh (used by proxy.ts)
 │       └── database.ts    # ★ CRUD for all 7 tables
 └── types/
     ├── index.ts           # App types (legacy format)
@@ -167,7 +167,7 @@ supabase/
 | Allowed Domain  | `@svce.ac.in` only                        |
 | Callback URL    | `/auth/callback`                          |
 | Session Storage | httpOnly cookies (Supabase SSR)           |
-| Session Refresh | Automatic via middleware on every request |
+| Session Refresh | Automatic via proxy on every request      |
 
 ### Auth Flow
 
@@ -191,7 +191,7 @@ supabase/
 ### Protected Routes
 
 - **Public:** `/login`, `/auth/callback`
-- **Protected:** Everything else (middleware redirects to `/login`)
+- **Protected:** Everything else (proxy redirects to `/login`)
 
 ### Components
 
@@ -418,7 +418,7 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 
 - Supabase Auth with Google OAuth
 - Domain restriction to `@svce.ac.in`
-- Login page, callback, middleware
+- Login page, callback, proxy (route protection)
 - AuthProvider, route protection, logout
 
 ### ✅ Phase 1 — Multi-User Data Model (COMPLETE)
@@ -498,8 +498,8 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 | `src/components/AuthProvider.tsx` | Auth context (session, user)     |
 | `src/lib/supabase/client.ts`      | Browser Supabase client          |
 | `src/lib/supabase/server.ts`      | Server Supabase client           |
-| `src/lib/supabase/middleware.ts`  | Session refresh + protection     |
-| `src/middleware.ts`               | Route protection                 |
+| `src/lib/supabase/middleware.ts`  | Session refresh logic            |
+| `src/proxy.ts`                    | Route protection (Next.js 16)    |
 | `src/app/login/page.tsx`          | Google OAuth login page          |
 | `src/app/auth/callback/route.ts`  | OAuth callback + domain check    |
 | `src/app/onboarding/page.tsx`     | New user onboarding (2-step)     |
@@ -513,6 +513,12 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 ---
 
 ## 🔧 Changelog
+
+### v2.0.2 — Next.js 16 Migration (Feb 10, 2026)
+
+- **Proxy Migration:** Renamed `middleware.ts` → `proxy.ts` for Next.js 16 compatibility
+- **Function Rename:** `middleware()` → `proxy()` per new convention
+- Fixes `MIDDLEWARE_INVOCATION_FAILED` error on Vercel deployment
 
 ### v2.0.1 — Bug Fixes (Feb 8, 2026)
 
