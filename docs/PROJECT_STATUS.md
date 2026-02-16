@@ -1,8 +1,8 @@
 # Campus Attendance Tracker - Project Status Document
 
-**Version:** 2.1.0  
+**Version:** 2.2.0  
 **Last Updated:** February 16, 2026  
-**Status:** Multi-User Platform (Cloud-Synced)
+**Status:** Multi-User Platform (Cloud-Synced) + Viral Sharing
 
 ---
 
@@ -77,27 +77,28 @@ src/
 ├── components/
 │   ├── AuthProvider.tsx   # Auth context (session, user, signOut)
 │   ├── DataProvider.tsx   # Data context (wraps useSyncedData)
+│   ├── ErrorBoundary.tsx  # React error boundary with retry UI
 │   ├── ThemeProvider.tsx  # Dark mode provider
 │   ├── Navigation.tsx     # App nav + logout + avatar
 │   ├── AttendanceChart.tsx
 │   ├── AttendanceLogger.tsx
+│   ├── CelebrationAnimation.tsx
 │   ├── DashboardCard.tsx
 │   ├── LeaveSimulator.tsx
 │   ├── OdTracker.tsx
 │   ├── SafeMarginCalculator.tsx
 │   ├── SemesterConfigManager.tsx
+│   ├── Spinner.tsx
 │   ├── SubjectDetailModal.tsx
 │   ├── SubjectsManager.tsx
 │   └── TimetableBuilder.tsx
 ├── hooks/
-│   ├── useSyncedData.ts   # ★ Main data hook (Supabase primary)
-│   ├── useSemesterData.ts # Semester-level queries + realtime
-│   └── useAttendanceData.ts # Legacy localStorage hook (deprecated)
+│   ├── useSyncedData.ts   # ★ Main data hook (Supabase + retry logic)
+│   └── useSemesterData.ts # Semester-level queries + realtime
 ├── lib/
 │   ├── calculations.ts    # All attendance calculation logic
 │   ├── constants.ts       # App constants
 │   ├── sampleData.ts      # Initial sample data
-│   ├── storage.ts         # localStorage utilities (legacy cache)
 │   └── supabase/
 │       ├── client.ts      # createBrowserClient
 │       ├── server.ts      # createServerClient (cookies)
@@ -119,14 +120,15 @@ supabase/
 │                                                              │
 │  layout.tsx                                                  │
 │  └── ThemeProvider                                           │
-│      └── AuthProvider  (session, user, signOut)              │
-│          └── DataProvider  (wraps useSyncedData)             │
-│              └── Navigation + <page>                         │
+│      └── ErrorBoundary  (graceful error handling + retry)    │
+│          └── AuthProvider  (session, user, signOut)          │
+│              └── DataProvider  (wraps useSyncedData)         │
+│                  └── Navigation + <page>                     │
 │                                                              │
 │  useSyncedData()                                             │
 │  ├── Reads from Supabase (getActiveSemesterData)             │
 │  ├── Converts DB types → legacy AppData for calculations     │
-│  ├── Provides CRUD that writes to Supabase                   │
+│  ├── Provides CRUD that writes to Supabase (with retry)      │
 │  └── Subscribes to realtime changes                          │
 │                                                              │
 └────────────────────────┬────────────────────────────────────┘
@@ -451,10 +453,15 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 - **Predictive engine:** Safe skip count, risk warnings, projected attendance
 - **OD tracker:** Usage bar (72h limit), full history list with details
 
-### 🔜 Phase 2 — Timetable Templates (NOT STARTED)
+### ✅ Phase 2 — Timetable Templates (COMPLETE)
 
-- Template tables + sharing
-- Viral adoption: one student sets → class imports
+- **Database:** `timetable_templates` table with RLS (public read, auth write)
+- **Share Codes:** Format `{DEPT}{YEAR}{SECTION}-K{YY}` (e.g., CS3A-K26)
+- **Collision Handling:** Auto-append random suffix on duplicate codes
+- **ShareTimetableButton:** Generate code → copy → WhatsApp share
+- **ImportTimetableModal:** Enter code → preview → import subjects + slots
+- **Metrics:** Atomic `use_count` increment, tracks imports per template
+- **Edge Cases:** Self-import blocked, overwrite warning, empty validation
 
 ### 🔜 Phase 6+ — Future
 
@@ -468,13 +475,15 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 
 1. ~~**No Backend/Cloud Sync**~~ ✅ RESOLVED
 2. ~~**No User Authentication**~~ ✅ RESOLVED
-3. **Limited Offline Support** — Requires internet for all operations
-4. **No Export/Import UI** — Functions exist but no UI
-5. **Limited Mobile Experience** — Tables may overflow on small screens
-6. **No Notifications** — No alerts or reminders
-7. **No PWA Support** — Not installable
-8. **Fixed Period Timings** — Hardcoded 08:30 - 15:15
-9. **No Undo/Redo** — Actions are immediate
+3. ~~**No Error Boundaries**~~ ✅ RESOLVED (ErrorBoundary + retry logic added)
+4. **Limited Offline Support** — Requires internet for all operations
+5. **No Export/Import UI** — Functions exist but no UI
+6. **Limited Mobile Experience** — Tables may overflow on small screens
+7. **No Notifications** — No alerts or reminders
+8. **No PWA Support** — Not installable
+9. **Fixed Period Timings** — Hardcoded 08:30 - 15:15
+10. **No Undo/Redo** — Actions are immediate
+11. **Dual Type Systems** — `types/index.ts` + `types/database.ts` require manual sync (intentional for calculation compatibility)
 
 ---
 
@@ -504,29 +513,74 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 
 ## 📁 File Reference
 
-| File                              | Purpose                          |
-| --------------------------------- | -------------------------------- |
-| `src/hooks/useSyncedData.ts`      | ★ Main data hook (Supabase)      |
-| `src/lib/supabase/database.ts`    | ★ CRUD for all tables            |
-| `src/components/DataProvider.tsx` | ★ Data context for all pages     |
-| `src/components/AuthProvider.tsx` | Auth context (session, user)     |
-| `src/lib/supabase/client.ts`      | Browser Supabase client          |
-| `src/lib/supabase/server.ts`      | Server Supabase client           |
-| `src/lib/supabase/middleware.ts`  | Session refresh logic            |
-| `src/proxy.ts`                    | Route protection (Next.js 16)    |
-| `src/app/login/page.tsx`          | Google OAuth login page          |
-| `src/app/auth/callback/route.ts`  | OAuth callback + domain check    |
-| `src/app/onboarding/page.tsx`     | New user onboarding (3-step)     |
-| `src/lib/calculations.ts`         | All attendance calculations      |
-| `src/types/database.ts`           | Supabase table types             |
-| `src/types/index.ts`              | Legacy app types                 |
-| `supabase/schema.sql`             | Full DB schema with RLS          |
-| `src/hooks/useAttendanceData.ts`  | Legacy hook (deprecated)         |
-| `src/lib/storage.ts`              | Legacy localStorage (deprecated) |
+| File                                      | Purpose                            |
+| ----------------------------------------- | ---------------------------------- |
+| `src/hooks/useSyncedData.ts`              | ★ Main data hook (Supabase+retry)  |
+| `src/lib/supabase/database.ts`            | ★ CRUD for all tables              |
+| `src/components/DataProvider.tsx`         | ★ Data context for all pages       |
+| `src/components/ErrorBoundary.tsx`        | React error boundary with retry UI |
+| `src/components/AuthProvider.tsx`         | Auth context (session, user)       |
+| `src/lib/supabase/client.ts`              | Browser Supabase client            |
+| `src/lib/supabase/server.ts`              | Server Supabase client             |
+| `src/lib/supabase/middleware.ts`          | Session refresh logic              |
+| `src/proxy.ts`                            | Route protection (Next.js 16)      |
+| `src/app/login/page.tsx`                  | Google OAuth login page            |
+| `src/app/auth/callback/route.ts`          | OAuth callback + domain check      |
+| `src/app/onboarding/page.tsx`             | New user onboarding (3-step)       |
+| `src/lib/calculations.ts`                 | All attendance calculations        |
+| `src/types/database.ts`                   | Supabase table types               |
+| `src/types/index.ts`                      | Legacy app types (used by calcs)   |
+| `supabase/schema.sql`                     | Full DB schema with RLS            |
+| `supabase/templates.sql`                  | Timetable templates migration      |
+| `src/components/ShareTimetableButton.tsx` | Share code generation + modal      |
+| `src/components/ImportTimetableModal.tsx` | Code entry + import logic          |
 
 ---
 
 ## 🔧 Changelog
+
+### v2.2.0 — Phase 2: Timetable Templates (Feb 16, 2026)
+
+- **Database:**
+  - New `timetable_templates` table with JSONB slots/subjects storage
+  - RLS: Public SELECT, authenticated INSERT, creator-only UPDATE/DELETE
+  - `increment_template_use_count()` RPC for atomic counter updates
+  - `template_metrics` view for analytics
+- **Types:**
+  - Added `TimetableTemplate`, `TemplateSlot`, `TemplateSubject` interfaces
+  - Added `DEPARTMENT_ABBREVIATIONS` mapping for share codes
+- **CRUD Functions:**
+  - `createTemplate()` with collision-resistant code generation
+  - `getTemplateByCode()`, `getTemplatesByUser()`, `incrementTemplateUseCount()`
+  - `convertToTemplateFormat()` helper for DB→template conversion
+- **Components:**
+  - `ShareTimetableButton` — Button/card variants, generates code, copy + WhatsApp share
+  - `ImportTimetableModal` — Code search, preview with stats, overwrite warning, import
+- **Settings Page:**
+  - Added "Quick Setup" section with share/import cards
+- **Edge Cases Handled:**
+  - Self-import blocked
+  - Empty timetable validation before share
+  - Overwrite warning when user has existing timetable
+  - Collision handling with random suffix
+
+### v2.1.1 — Architecture Cleanup (Feb 16, 2026)
+
+- **Deprecated Code Removed:**
+  - Deleted `useAttendanceData.ts` (replaced by `useSyncedData`)
+  - Deleted `storage.ts` (localStorage utilities no longer needed)
+  - Removed backwards-compat `useAttendanceData` alias from DataProvider
+- **Error Handling:**
+  - Added `ErrorBoundary` component with retry UI
+  - ErrorBoundary wraps entire app in layout.tsx
+- **Retry Logic:**
+  - Added `withRetry()` utility in useSyncedData (exponential backoff)
+  - All mutation operations now retry up to 3 times on transient failures
+  - Auth/permission errors are not retried (fail fast)
+- **Type System Note:**
+  - `types/index.ts` (legacy) intentionally retained — used by calculation functions
+  - `types/database.ts` (Supabase) — used by database layer
+  - Conversion happens in `useSyncedData` via helper functions
 
 ### v2.1.0 — Phase 4 & 5 Complete (Feb 16, 2026)
 

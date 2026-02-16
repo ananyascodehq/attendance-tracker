@@ -435,15 +435,18 @@ export function useSyncedData(): UseSyncedDataResult {
       a => a.date === log.date && a.period_number === log.period_number && a.subject_id === subject.id
     );
     
+    const now = new Date().toISOString();
     const optimisticLog: AttendanceLogDB = {
       id: existingIndex >= 0 ? semesterData.attendance[existingIndex].id : `temp-${Date.now()}`,
+      user_id: existingIndex >= 0 ? semesterData.attendance[existingIndex].user_id : user!.id,
       semester_id: semesterData.semester.id,
       subject_id: subject.id,
       date: log.date,
       period_number: log.period_number as PeriodNumber,
       status: log.status as AttendanceStatusDB,
       notes: log.notes || null,
-      created_at: new Date().toISOString(),
+      created_at: existingIndex >= 0 ? semesterData.attendance[existingIndex].created_at : now,
+      updated_at: now,
     };
 
     setSemesterData(prev => {
