@@ -6,20 +6,32 @@ import { createClient } from '@/lib/supabase/client';
 import { DotsLoader } from '@/components/Spinner';
 import { useAuth } from '@/components/AuthProvider';
 import { useData } from '@/components/DataProvider';
+import { DEPARTMENTS, Department } from '@/types/database';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { createSemester, refresh } = useData();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'welcome' | 'semester'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'department' | 'semester'>('welcome');
+  
+  // Department form state
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | ''>('');
   
   // Semester form state
   const [semesterName, setSemesterName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  const handleContinueToDepartment = () => {
+    setStep('department');
+  };
+
   const handleContinueToSemester = () => {
+    if (!selectedDepartment) {
+      alert('Please select your department');
+      return;
+    }
     setStep('semester');
   };
 
@@ -42,10 +54,10 @@ export default function OnboardingPage() {
       // Create the first semester (via DataProvider — triggers loadData)
       await createSemester(semesterName, startDate, endDate, endDate);
 
-      // Mark user as onboarded
+      // Mark user as onboarded and save department
       await supabase
         .from('profiles')
-        .update({ onboarded: true })
+        .update({ onboarded: true, department: selectedDepartment })
         .eq('id', user?.id);
 
       // Ensure DataProvider has latest data before navigating
@@ -124,7 +136,7 @@ export default function OnboardingPage() {
 
             {/* CTA */}
             <button
-              onClick={handleContinueToSemester}
+              onClick={handleContinueToDepartment}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               Continue
@@ -137,6 +149,98 @@ export default function OnboardingPage() {
           <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-6">
             Your data is synced to your account across devices.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Department Selection Step
+  if (step === 'department') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-gray-900 via-white dark:via-gray-900 to-blue-50 dark:to-gray-800 flex items-center justify-center p-6">
+        <div className="w-full max-w-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50 p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Select Your Department
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Choose your program to help us personalize your experience.
+              </p>
+            </div>
+
+            {/* Department Selection */}
+            <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2">
+              {DEPARTMENTS.map((group) => (
+                <div key={group.category}>
+                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                    {group.category}
+                  </h3>
+                  <div className="space-y-2">
+                    {group.departments.map((dept) => (
+                      <button
+                        key={dept}
+                        onClick={() => setSelectedDepartment(dept)}
+                        className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                          selectedDepartment === dept
+                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            selectedDepartment === dept
+                              ? 'border-indigo-500 bg-indigo-500'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {selectedDepartment === dept && (
+                              <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 8 8">
+                                <circle cx="4" cy="4" r="4" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="font-medium">{dept}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep('welcome')}
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleContinueToSemester}
+                disabled={!selectedDepartment}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                Continue
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Progress indicator */}
+          <div className="flex justify-center gap-2 mt-6">
+            <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+            <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+          </div>
         </div>
       </div>
     );
@@ -212,7 +316,7 @@ export default function OnboardingPage() {
           {/* Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('welcome')}
+              onClick={() => setStep('department')}
               className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Back
@@ -241,6 +345,7 @@ export default function OnboardingPage() {
 
         {/* Progress indicator */}
         <div className="flex justify-center gap-2 mt-6">
+          <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
           <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
           <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
         </div>

@@ -1,7 +1,7 @@
 # Campus Attendance Tracker - Project Status Document
 
-**Version:** 2.0.2  
-**Last Updated:** February 10, 2026  
+**Version:** 2.1.0  
+**Last Updated:** February 16, 2026  
 **Status:** Multi-User Platform (Cloud-Synced)
 
 ---
@@ -71,7 +71,7 @@ src/
 │   ├── auth/
 │   │   └── callback/      # OAuth callback handler
 │   ├── login/             # Login page (Google OAuth)
-│   ├── onboarding/        # New user onboarding (2-step)
+│   ├── onboarding/        # New user onboarding (3-step)
 │   ├── planner/           # Planning tools page
 │   └── settings/          # Configuration page
 ├── components/
@@ -161,13 +161,13 @@ supabase/
 
 ### Google OAuth with Domain Restriction
 
-| Aspect          | Detail                                    |
-| --------------- | ----------------------------------------- |
-| Provider        | Google OAuth 2.0 via Supabase Auth        |
-| Allowed Domain  | `@svce.ac.in` only                        |
-| Callback URL    | `/auth/callback`                          |
-| Session Storage | httpOnly cookies (Supabase SSR)           |
-| Session Refresh | Automatic via proxy on every request      |
+| Aspect          | Detail                               |
+| --------------- | ------------------------------------ |
+| Provider        | Google OAuth 2.0 via Supabase Auth   |
+| Allowed Domain  | `@svce.ac.in` only                   |
+| Callback URL    | `/auth/callback`                     |
+| Session Storage | httpOnly cookies (Supabase SSR)      |
+| Session Refresh | Automatic via proxy on every request |
 
 ### Auth Flow
 
@@ -437,12 +437,26 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 - Onboarding flow creates first semester
 - DB types ↔ legacy types conversion layer
 
+### ✅ Phase 4 — Onboarding Flow (COMPLETE)
+
+- 3-step onboarding: Welcome → Department → Semester
+- Department selection with all UG/PG programs
+- Department stored in profiles table
+- Profile marked as onboarded after completion
+- Redirect to /settings for subject & timetable setup
+
+### ✅ Phase 5 — Core Retention Features (COMPLETE)
+
+- **Daily logging:** Today auto-loads, default present, one-tap leave/OD
+- **Predictive engine:** Safe skip count, risk warnings, projected attendance
+- **OD tracker:** Usage bar (72h limit), full history list with details
+
 ### 🔜 Phase 2 — Timetable Templates (NOT STARTED)
 
 - Template tables + sharing
 - Viral adoption: one student sets → class imports
 
-### 🔜 Phase 4+ — Future
+### 🔜 Phase 6+ — Future
 
 - PWA + offline mode
 - Analytics dashboard
@@ -502,7 +516,7 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 | `src/proxy.ts`                    | Route protection (Next.js 16)    |
 | `src/app/login/page.tsx`          | Google OAuth login page          |
 | `src/app/auth/callback/route.ts`  | OAuth callback + domain check    |
-| `src/app/onboarding/page.tsx`     | New user onboarding (2-step)     |
+| `src/app/onboarding/page.tsx`     | New user onboarding (3-step)     |
 | `src/lib/calculations.ts`         | All attendance calculations      |
 | `src/types/database.ts`           | Supabase table types             |
 | `src/types/index.ts`              | Legacy app types                 |
@@ -513,6 +527,17 @@ ThemeProvider → AuthProvider → DataProvider → Navigation + Pages
 ---
 
 ## 🔧 Changelog
+
+### v2.1.0 — Phase 4 & 5 Complete (Feb 16, 2026)
+
+- **Phase 4 — Onboarding Flow:**
+  - Added department selection step to onboarding (3-step flow)
+  - Added `department` column to profiles table
+  - Added `Department` TypeScript type with all 20 UG/PG programs
+- **Phase 5 — Core Retention Features:**
+  - Verified all daily logging features (today auto-loads, default present, one-tap mark)
+  - Verified predictive engine (safe skip count, risk warnings, projected attendance)
+  - Verified OD tracker (usage bar, history list)
 
 ### v2.0.2 — Next.js 16 Migration (Feb 10, 2026)
 
@@ -563,4 +588,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 ---
 
-_This document serves as a comprehensive reference for the current state of the project. Last updated after Phase 3 (Sync Layer) completion._
+_This document serves as a comprehensive reference for the current state of the project. Last updated after Phase 5 (Core Retention Features) completion._

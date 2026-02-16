@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     email TEXT NOT NULL,
     full_name TEXT,
     avatar_url TEXT,
+    department TEXT,
     onboarded BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );

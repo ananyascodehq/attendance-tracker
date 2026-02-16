@@ -150,40 +150,40 @@ One student sets timetable → whole class imports.
 
 ---
 
-## Phase 4 — Onboarding Flow (Partial ✅)
+## Phase 4 — Onboarding Flow ✅
 
 ### After first login
 
-- [ ] choose department (future — Phase 2 templates)
+- [x] choose department
 - [x] create semester (name, start/end dates)
 - [ ] import timetable template (future — Phase 2 templates)
 - [x] redirect to /settings for subject & timetable setup
-- [x] 2-step onboarding UI (welcome → semester setup)
+- [x] 3-step onboarding UI (welcome → department → semester)
 - [x] profile marked as onboarded
 
 Target: onboarding < 60 seconds.
 
 ---
 
-## Phase 5 — Core Retention Features
+## Phase 5 — Core Retention Features ✅
 
 ### Daily logging
 
-- [ ] today auto loads
-- [ ] default present
-- [ ] one-tap mark leave/OD
-- [ ] fast navigation
+- [x] today auto loads
+- [x] default present
+- [x] one-tap mark leave/OD
+- [x] fast navigation
 
 ### Predictive engine
 
-- [ ] safe skip count
-- [ ] risk warnings
-- [ ] projected attendance
+- [x] safe skip count
+- [x] risk warnings
+- [x] projected attendance
 
 ### OD tracker
 
-- [ ] usage bar
-- [ ] history list
+- [x] usage bar
+- [x] history list
 
 ---
 

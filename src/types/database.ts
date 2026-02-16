@@ -9,6 +9,66 @@ export type AttendanceStatusDB = 'present' | 'leave' | 'od';
 export type ZeroCreditTypeDB = 'library' | 'seminar' | 'vac';
 
 // =============================================
+// Department Types
+// =============================================
+export type Department =
+  // Undergraduate Programs
+  | 'B.E. Mechanical Engineering (Automobile)'
+  | 'B.Tech Chemical Engineering'
+  | 'B.E Civil Engineering'
+  | 'B.E Computer Science and Engineering'
+  | 'B.E Electrical and Electronics Engineering'
+  | 'B.E Electronics and Communication Engineering'
+  | 'B.E Marine Engineering'
+  | 'B.E Mechanical Engineering'
+  | 'B.Tech Biotechnology'
+  | 'B.Tech Information Technology'
+  | 'B.Tech Artificial Intelligence and Data Sciences'
+  | 'B.E Mechanical and Automation Engineering'
+  // Postgraduate Programs
+  | 'M.E Communication Systems'
+  | 'M.E Computer Science and Engineering'
+  | 'M.E Power Electronics & Drives'
+  | 'M.Tech Biotechnology'
+  | 'M.Tech Chemical Engineering'
+  | 'M.Tech Cyber Forensics and Information Security'
+  | 'M.E Industrial Automation and Robotics'
+  | 'M.E Construction Engineering and Management';
+
+export const DEPARTMENTS: { category: string; departments: Department[] }[] = [
+  {
+    category: 'Undergraduate Programs',
+    departments: [
+      'B.E. Mechanical Engineering (Automobile)',
+      'B.Tech Chemical Engineering',
+      'B.E Civil Engineering',
+      'B.E Computer Science and Engineering',
+      'B.E Electrical and Electronics Engineering',
+      'B.E Electronics and Communication Engineering',
+      'B.E Marine Engineering',
+      'B.E Mechanical Engineering',
+      'B.Tech Biotechnology',
+      'B.Tech Information Technology',
+      'B.Tech Artificial Intelligence and Data Sciences',
+      'B.E Mechanical and Automation Engineering',
+    ],
+  },
+  {
+    category: 'Postgraduate Programs',
+    departments: [
+      'M.E Communication Systems',
+      'M.E Computer Science and Engineering',
+      'M.E Power Electronics & Drives',
+      'M.Tech Biotechnology',
+      'M.Tech Chemical Engineering',
+      'M.Tech Cyber Forensics and Information Security',
+      'M.E Industrial Automation and Robotics',
+      'M.E Construction Engineering and Management',
+    ],
+  },
+];
+
+// =============================================
 // Profile Table
 // =============================================
 export interface Profile {
@@ -16,6 +76,7 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  department: Department | null;
   onboarded: boolean;
   created_at: string; // ISO timestamp
 }
