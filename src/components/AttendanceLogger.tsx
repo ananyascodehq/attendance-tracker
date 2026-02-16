@@ -66,6 +66,12 @@ const CalendarBlockedIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const BookOpenIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+  </svg>
+);
+
 export const AttendanceLogger = ({
   date,
   timetable,
@@ -106,6 +112,22 @@ export const AttendanceLogger = ({
     }
     if (selectedDate > endDate) {
       return { type: 'after', message: 'After semester end' };
+    }
+    return null;
+  }, [semesterConfig, date]);
+
+  // Check if selected date falls within a CAT exam period
+  const catPeriod = useMemo(() => {
+    if (!semesterConfig?.cat_periods) return null;
+    const selectedDate = new Date(date);
+    
+    for (const cat of semesterConfig.cat_periods) {
+      const catStart = new Date(cat.start_date);
+      const catEnd = new Date(cat.end_date);
+      
+      if (selectedDate >= catStart && selectedDate <= catEnd) {
+        return cat;
+      }
     }
     return null;
   }, [semesterConfig, date]);
@@ -227,6 +249,24 @@ export const AttendanceLogger = ({
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             No attendance to log on {dayName}
           </p>
+        </div>
+      ) : catPeriod ? (
+        <div className="p-12 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-4">
+            <BookOpenIcon className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">📚 {catPeriod.name} Season!</h2>
+          <p className="text-purple-700 dark:text-purple-400 font-medium text-lg mb-1">
+            Go study instead of checking this app
+          </p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            No classes during exam week. Your GPA needs you more than we do.
+          </p>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/30 rounded-full">
+            <span className="text-purple-600 dark:text-purple-300 text-sm font-medium">
+              Pro tip: Close all tabs. Yes, even this one. Especially this one.
+            </span>
+          </div>
         </div>
       ) : outOfSemester ? (
         <div className="p-12 text-center">

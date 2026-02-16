@@ -507,7 +507,9 @@ export function useSyncedData(): UseSyncedDataResult {
         });
       }
     }
-  }, [semesterData]);
+
+    await loadData(false);
+  }, [semesterData, loadData]);
 
   const updateAllSubjects = useCallback(async (subjects: Subject[]) => {
     if (!semesterData) return;
