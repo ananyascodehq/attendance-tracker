@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useData } from '@/components/DataProvider';
 import { AttendanceLogger } from '@/components/AttendanceLogger';
 import { PageLoader } from '@/components/Spinner';
+import { CelebrationAnimation } from '@/components/CelebrationAnimation';
 import Link from 'next/link';
 
 // Icons
@@ -44,10 +45,78 @@ const CheckCircleIcon = ({ className }: { className?: string }) => (
 );
 
 export default function AttendancePage() {
-  const { data, loading, error, refresh, getTodayISO, addAttendanceLog, deleteAttendanceLog } =
+  const { data, loading, error, refresh, getTodayISO, addAttendanceLog, deleteAttendanceLog, getStats } =
     useData();
   const [selectedDate, setSelectedDate] = useState(getTodayISO());
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
+  // Celebration state
+  const [celebration, setCelebration] = useState<{
+    show: boolean;
+    type: 'subject' | 'overall';
+    subjectName?: string;
+    percentage: number;
+  } | null>(null);
+  
+  // Track previous stats to detect threshold crossings
+  const previousStatsRef = useRef<{
+    overall: number;
+    subjects: Map<string, number>;
+  } | null>(null);
+
+  // Calculate current stats and detect threshold crossings
+  useEffect(() => {
+    if (!data) return;
+    
+    const currentStats = getStats();
+    if (!currentStats) return;
+
+    // Initialize previous stats if not set
+    if (!previousStatsRef.current) {
+      previousStatsRef.current = {
+        overall: currentStats.overall_stats.percentage,
+        subjects: new Map(
+          currentStats.subject_stats.map(s => [s.subject_code || s.subject_name, s.percentage])
+        ),
+      };
+      return;
+    }
+
+    const prev = previousStatsRef.current;
+    
+    // Check overall threshold (80%)
+    if (prev.overall < 80 && currentStats.overall_stats.percentage >= 80) {
+      setCelebration({
+        show: true,
+        type: 'overall',
+        percentage: 80,
+      });
+    }
+    
+    // Check subject threshold (75%)
+    for (const subject of currentStats.subject_stats) {
+      const key = subject.subject_code || subject.subject_name;
+      const prevPercentage = prev.subjects.get(key) || 0;
+      
+      if (prevPercentage < 75 && subject.percentage >= 75) {
+        setCelebration({
+          show: true,
+          type: 'subject',
+          subjectName: subject.subject_name,
+          percentage: 75,
+        });
+        break; // Show one celebration at a time
+      }
+    }
+
+    // Update previous stats
+    previousStatsRef.current = {
+      overall: currentStats.overall_stats.percentage,
+      subjects: new Map(
+        currentStats.subject_stats.map(s => [s.subject_code || s.subject_name, s.percentage])
+      ),
+    };
+  }, [data, getStats]);
 
   // Create a map of existing logs for quick lookup - MUST be before early returns
   const logsMap = useMemo(() => {
@@ -289,6 +358,16 @@ export default function AttendancePage() {
           )}
         </div>
       </div>
+
+      {/* Celebration Animation */}
+      {celebration?.show && (
+        <CelebrationAnimation
+          type={celebration.type}
+          subjectName={celebration.subjectName}
+          percentage={celebration.percentage}
+          onComplete={() => setCelebration(null)}
+        />
+      )}
     </div>
   );
 }

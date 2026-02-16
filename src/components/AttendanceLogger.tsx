@@ -197,18 +197,22 @@ export const AttendanceLogger = ({
   };
 
   const handleMarkDayAsAbsent = () => {
-    todaySlots.forEach((slot) => {
-      onLogAttendance(slot.period_number, slot.subject_code, 'leave');
-    });
+    todaySlots
+      .filter((slot) => slot.subject_code) // Only process slots with valid subjects
+      .forEach((slot) => {
+        onLogAttendance(slot.period_number, slot.subject_code, 'leave');
+      });
   };
 
   const handleMarkDayAsOD = () => {
-    // Mark all as OD first
-    todaySlots.forEach((slot) => {
+    const validSlots = todaySlots.filter((slot) => slot.subject_code);
+    
+    // Mark all valid slots as OD first
+    validSlots.forEach((slot) => {
       onLogAttendance(slot.period_number, slot.subject_code, 'od');
     });
     // Then open modal for reason
-    const periods = todaySlots.map((slot) => ({
+    const periods = validSlots.map((slot) => ({
       period: slot.period_number,
       subject: slot.subject_code,
     }));
@@ -216,9 +220,11 @@ export const AttendanceLogger = ({
   };
 
   const handleClearAll = () => {
-    todaySlots.forEach((slot) => {
-      onDeleteAttendance(slot.period_number, slot.subject_code);
-    });
+    todaySlots
+      .filter((slot) => slot.subject_code) // Only process slots with valid subjects
+      .forEach((slot) => {
+        onDeleteAttendance(slot.period_number, slot.subject_code);
+      });
   };
 
   // Count stats for the day

@@ -223,6 +223,74 @@ Target: onboarding < 60 seconds.
 
 ---
 
+## UX & Feature Backlog (Review Queue)
+
+### Quick Wins (High Impact, Low Effort)
+
+- [ ] Add a “Log Today’s Attendance” quick button on dashboard
+- [ ] Add attendance streak counter (e.g., 5-day streak)
+- [ ] Add weekly summary banner (Monday digest)
+- [ ] Add swipe gestures on attendance page (mobile)
+- [ ] Add keyboard shortcuts (←/→ day navigation, P/L/O status)
+- [ ] Show Today/Yesterday/Tomorrow labels instead of raw date everywhere possible
+- [x] Add lightweight celebration animation when crossing key thresholds (75% per subject and 80% overall)
+
+### Medium Effort, High Value
+
+- [ ] Add mini monthly calendar on attendance page with status dots
+- [ ] Add Undo toast after logging status changes
+- [ ] Add smart “safe-to-skip” recommendations by subject/day
+- [ ] Add subject-wise attendance trend sparklines/cards
+- [ ] Add export to PDF/image report
+- [ ] Add bulk import of subjects via pasted text
+- [ ] Add quick stats badge in navigation
+- [ ] Add “mark week as present” bulk action
+
+### Bigger Features (High Effort)
+
+- [ ] Add push notifications (daily reminder, risk warnings, weekly digest)
+- [ ] Build attendance heatmap/calendar analytics view
+- [ ] Add long-range predictive alerts (future risk date projections)
+- [ ] Add “upcoming class” widget on dashboard
+- [ ] Add multi-semester archive + comparison
+- [ ] Add batch attendance entry for date ranges
+- [ ] Add class cancellation status for timetable periods
+
+### UI/UX Polish
+
+- [ ]
+- [ ] Improve empty states with friendlier visuals/messages
+- [ ] Add first-time tooltips / onboarding hints for key actions
+- [ ] Add haptic feedback hooks for mobile interactions
+- [ ] Add subtle page/card transitions
+- [ ] Add optional accent color customization
+
+### Reliability / Safety / QoL
+
+- [ ] Add robust error boundaries with retry actions
+- [ ] Show offline/online sync status banner
+- [ ] Build export/import UI in Settings (Phase 8 execution)
+- [ ] Add semester switcher (active + archived)
+- [ ] Add subject filter/search by risk state
+- [ ] Add quick actions on subject cards (history/simulate/log)
+
+### Fun / Viral Ideas (Optional)
+
+- [ ] Shareable attendance stat card (image)
+- [ ] Department-level anonymous leaderboard (optional)
+- [ ] Achievement badges (streaks, recovery, OD milestones)
+- [ ] Dynamic motivational messages based on risk status
+
+### Suggested First 5 to Implement
+
+- [ ] Keyboard shortcuts for attendance page
+- [ ] Today/Yesterday/Tomorrow date labels
+- [ ] Mini calendar with attendance indicators
+- [ ] Undo toast for attendance updates
+- [ ] Attendance streak on dashboard
+
+---
+
 ## Non-Goals (for now)
 
 - [ ] teacher dashboards
