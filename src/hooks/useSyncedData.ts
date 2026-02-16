@@ -4,6 +4,62 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
 import * as db from '@/lib/supabase/database';
+
+// =============================================
+// RETRY UTILITY
+// Retries failed mutations with exponential backoff
+// =============================================
+
+interface RetryOptions {
+  maxAttempts?: number;
+  baseDelayMs?: number;
+  maxDelayMs?: number;
+  onRetry?: (attempt: number, error: Error) => void;
+}
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxAttempts = 3,
+    baseDelayMs = 500,
+    maxDelayMs = 5000,
+    onRetry,
+  } = options;
+
+  let lastError: Error = new Error('Unknown error');
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      // Handle Supabase errors (which have message property but aren't Error instances)
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error && typeof error === 'object' && 'message' in error) 
+          ? String((error as { message: unknown }).message)
+          : JSON.stringify(error);
+      lastError = error instanceof Error ? error : new Error(errorMessage);
+      
+      // Don't retry on auth errors or validation errors
+      if (lastError.message.includes('auth') || 
+          lastError.message.includes('permission') ||
+          lastError.message.includes('RLS') ||
+          lastError.message.includes('violates')) {
+        throw lastError;
+      }
+
+      if (attempt < maxAttempts) {
+        const delay = Math.min(baseDelayMs * Math.pow(2, attempt - 1), maxDelayMs);
+        onRetry?.(attempt, lastError);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError;
+}
 import type {
   SemesterData,
   Semester,
@@ -374,15 +430,52 @@ export function useSyncedData(): UseSyncedDataResult {
       return;
     }
 
-    await db.logAttendance({
+    // Optimistic update: immediately update local state
+    const existingIndex = semesterData.attendance.findIndex(
+      a => a.date === log.date && a.period_number === log.period_number && a.subject_id === subject.id
+    );
+    
+    const optimisticLog: AttendanceLogDB = {
+      id: existingIndex >= 0 ? semesterData.attendance[existingIndex].id : `temp-${Date.now()}`,
       semester_id: semesterData.semester.id,
       subject_id: subject.id,
       date: log.date,
       period_number: log.period_number as PeriodNumber,
       status: log.status as AttendanceStatusDB,
       notes: log.notes || null,
+      created_at: new Date().toISOString(),
+    };
+
+    setSemesterData(prev => {
+      if (!prev) return prev;
+      const newAttendance = [...prev.attendance];
+      if (existingIndex >= 0) {
+        newAttendance[existingIndex] = optimisticLog;
+      } else {
+        newAttendance.push(optimisticLog);
+      }
+      return { ...prev, attendance: newAttendance };
     });
-  }, [semesterData]);
+
+    // Persist to database in background
+    try {
+      await withRetry(
+        () => db.logAttendance({
+          semester_id: semesterData.semester.id,
+          subject_id: subject.id,
+          date: log.date,
+          period_number: log.period_number as PeriodNumber,
+          status: log.status as AttendanceStatusDB,
+          notes: log.notes || null,
+        }),
+        { onRetry: (attempt) => console.warn(`Retrying attendance log (attempt ${attempt})`) }
+      );
+    } catch (err) {
+      // On error, reload data to get correct state
+      console.error('Failed to save attendance:', err);
+      loadData(false);
+    }
+  }, [semesterData, loadData]);
 
   const deleteAttendanceLog = useCallback(async (date: string, period: number, subjectCode: string | undefined) => {
     if (!semesterData) return;
@@ -393,30 +486,55 @@ export function useSyncedData(): UseSyncedDataResult {
     const log = semesterData.attendance.find(
       a => a.date === date && a.period_number === period && a.subject_id === subject.id
     );
-    if (log) {
-      await db.deleteAttendanceLog(log.id);
+    if (!log) return;
+
+    // Optimistic update: immediately remove from local state
+    setSemesterData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        attendance: prev.attendance.filter(a => a.id !== log.id),
+      };
+    });
+
+    // Persist to database in background
+    try {
+      await withRetry(
+        () => db.deleteAttendanceLog(log.id),
+        { onRetry: (attempt) => console.warn(`Retrying delete attendance (attempt ${attempt})`) }
+      );
+    } catch (err) {
+      // On error, reload data to get correct state
+      console.error('Failed to delete attendance:', err);
+      loadData(false);
     }
-  }, [semesterData]);
+  }, [semesterData, loadData]);
 
   const updateSubject = useCallback(async (subject: Subject) => {
     if (!semesterData) return;
 
     const existing = subjectMapRef.current.get(subject.subject_code || '');
     if (existing) {
-      await db.updateSubject(existing.id, {
-        subject_code: subject.subject_code || null,
-        subject_name: subject.subject_name,
-        credits: subject.credits,
-        zero_credit_type: subject.zero_credit_type || null,
-      });
+      await withRetry(
+        () => db.updateSubject(existing.id, {
+          subject_code: subject.subject_code || null,
+          subject_name: subject.subject_name,
+          credits: subject.credits,
+          zero_credit_type: subject.zero_credit_type || null,
+        }),
+        { onRetry: (attempt) => console.warn(`Retrying update subject (attempt ${attempt})`) }
+      );
     } else {
-      await db.createSubject({
-        semester_id: semesterData.semester.id,
-        subject_code: subject.subject_code || null,
-        subject_name: subject.subject_name,
-        credits: subject.credits,
-        zero_credit_type: subject.zero_credit_type || null,
-      });
+      await withRetry(
+        () => db.createSubject({
+          semester_id: semesterData.semester.id,
+          subject_code: subject.subject_code || null,
+          subject_name: subject.subject_name,
+          credits: subject.credits,
+          zero_credit_type: subject.zero_credit_type || null,
+        }),
+        { onRetry: (attempt) => console.warn(`Retrying create subject (attempt ${attempt})`) }
+      );
     }
   }, [semesterData]);
 
