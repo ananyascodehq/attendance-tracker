@@ -263,6 +263,82 @@ export interface AttendanceLogWithSubject extends AttendanceLogDB {
 }
 
 // =============================================
+// Timetable Template Table (Phase 2: Viral Sharing)
+// =============================================
+
+// Slot structure stored in JSONB (simplified, no UUIDs needed)
+export interface TemplateSlot {
+  day_of_week: DayOfWeek;
+  period_number: PeriodNumber;
+  subject_code: string | null;
+  start_time: string; // HH:mm
+  end_time: string; // HH:mm
+}
+
+// Subject structure stored in JSONB
+export interface TemplateSubject {
+  subject_code: string | null;
+  subject_name: string;
+  credits: number;
+  zero_credit_type: ZeroCreditTypeDB | null;
+}
+
+export interface TimetableTemplate {
+  id: string; // UUID
+  share_code: string;
+  department: string;
+  year: number;
+  semester: number;
+  section: string | null;
+  created_by: string | null; // UUID, null if creator deleted account
+  use_count: number;
+  slots: TemplateSlot[];
+  subjects: TemplateSubject[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimetableTemplateInsert {
+  share_code: string;
+  department: string;
+  year: number;
+  semester: number;
+  section?: string | null;
+  slots: TemplateSlot[];
+  subjects: TemplateSubject[];
+}
+
+export interface TimetableTemplateUpdate {
+  share_code?: string;
+  slots?: TemplateSlot[];
+  subjects?: TemplateSubject[];
+}
+
+// Department abbreviation mapping for share codes
+export const DEPARTMENT_ABBREVIATIONS: Record<string, string> = {
+  'B.E. Mechanical Engineering (Automobile)': 'MEA',
+  'B.Tech Chemical Engineering': 'CH',
+  'B.E Civil Engineering': 'CE',
+  'B.E Computer Science and Engineering': 'CS',
+  'B.E Electrical and Electronics Engineering': 'EE',
+  'B.E Electronics and Communication Engineering': 'EC',
+  'B.E Marine Engineering': 'MR',
+  'B.E Mechanical Engineering': 'ME',
+  'B.Tech Biotechnology': 'BT',
+  'B.Tech Information Technology': 'IT',
+  'B.Tech Artificial Intelligence and Data Sciences': 'AI',
+  'B.E Mechanical and Automation Engineering': 'MA',
+  'M.E Communication Systems': 'MCS',
+  'M.E Computer Science and Engineering': 'MCE',
+  'M.E Power Electronics & Drives': 'MPE',
+  'M.Tech Biotechnology': 'MBT',
+  'M.Tech Chemical Engineering': 'MCH',
+  'M.Tech Cyber Forensics and Information Security': 'MCF',
+  'M.E Industrial Automation and Robotics': 'MIA',
+  'M.E Construction Engineering and Management': 'MCM',
+};
+
+// =============================================
 // Full Semester Data (for dashboard)
 // =============================================
 export interface SemesterData {

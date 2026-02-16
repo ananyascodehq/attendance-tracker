@@ -19,6 +19,11 @@ import type {
   CatPeriodInsert,
   CatPeriodUpdate,
   SemesterData,
+  TimetableTemplate,
+  TimetableTemplateInsert,
+  TimetableTemplateUpdate,
+  TemplateSlot,
+  TemplateSubject,
 } from '@/types/database';
 
 const supabase = createClient();
@@ -447,4 +452,150 @@ export async function getActiveSemesterData(): Promise<SemesterData | null> {
   const activeSemester = await getActiveSemester();
   if (!activeSemester) return null;
   return getSemesterData(activeSemester.id);
+}
+
+// =============================================
+// TIMETABLE TEMPLATES (Phase 2: Viral Sharing)
+// =============================================
+
+// Generate a unique share code
+function generateShareCode(dept: string, year: number, section: string | null): string {
+  const yearShort = new Date().getFullYear().toString().slice(-2);
+  const sectionPart = section || '';
+  // Format: {DEPT}{YEAR}{SECTION}-K{YY} (K for academic year identifier)
+  return `${dept}${year}${sectionPart}-K${yearShort}`.toUpperCase();
+}
+
+// Generate random suffix for collision handling
+function generateRandomSuffix(): string {
+  const chars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // No I, O to avoid confusion
+  return chars[Math.floor(Math.random() * chars.length)] + 
+         chars[Math.floor(Math.random() * chars.length)];
+}
+
+export async function createTemplate(
+  template: TimetableTemplateInsert
+): Promise<TimetableTemplate> {
+  const userId = await getUserId();
+  
+  // Generate initial share code
+  let shareCode = template.share_code;
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  while (attempts < maxAttempts) {
+    const { data, error } = await supabase
+      .from('timetable_templates')
+      .insert({
+        ...template,
+        share_code: shareCode,
+        created_by: userId,
+      })
+      .select()
+      .single();
+    
+    if (!error) {
+      return data as TimetableTemplate;
+    }
+    
+    // Check if it's a unique constraint violation
+    if (error.code === '23505') {
+      // Collision - add random suffix
+      shareCode = `${template.share_code}-${generateRandomSuffix()}`;
+      attempts++;
+    } else {
+      throw error;
+    }
+  }
+  
+  throw new Error('Failed to generate unique share code after multiple attempts');
+}
+
+export async function getTemplateByCode(shareCode: string): Promise<TimetableTemplate | null> {
+  const { data, error } = await supabase
+    .from('timetable_templates')
+    .select('*')
+    .eq('share_code', shareCode.toUpperCase())
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') return null; // Not found
+    throw error;
+  }
+  
+  return data as TimetableTemplate;
+}
+
+export async function getTemplatesByUser(): Promise<TimetableTemplate[]> {
+  const userId = await getUserId();
+  
+  const { data, error } = await supabase
+    .from('timetable_templates')
+    .select('*')
+    .eq('created_by', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return (data || []) as TimetableTemplate[];
+}
+
+export async function incrementTemplateUseCount(templateId: string): Promise<TimetableTemplate> {
+  // Use RPC for atomic increment
+  const { data, error } = await supabase
+    .rpc('increment_template_use_count', { p_template_id: templateId });
+  
+  if (error) throw error;
+  return data as TimetableTemplate;
+}
+
+export async function updateTemplate(
+  id: string,
+  updates: TimetableTemplateUpdate
+): Promise<TimetableTemplate> {
+  const { data, error } = await supabase
+    .from('timetable_templates')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as TimetableTemplate;
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('timetable_templates')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+}
+
+// Helper to convert user's timetable + subjects to template format
+export function convertToTemplateFormat(
+  timetable: TimetableSlotDB[],
+  subjects: SubjectDB[]
+): { slots: TemplateSlot[]; subjects: TemplateSubject[] } {
+  const subjectMap = new Map(subjects.map(s => [s.id, s]));
+  
+  const slots: TemplateSlot[] = timetable.map(slot => {
+    const subject = slot.subject_id ? subjectMap.get(slot.subject_id) : null;
+    return {
+      day_of_week: slot.day_of_week,
+      period_number: slot.period_number,
+      subject_code: subject?.subject_code || null,
+      start_time: slot.start_time.slice(0, 5), // Remove seconds
+      end_time: slot.end_time.slice(0, 5),
+    };
+  });
+  
+  const templateSubjects: TemplateSubject[] = subjects.map(s => ({
+    subject_code: s.subject_code,
+    subject_name: s.subject_name,
+    credits: s.credits,
+    zero_credit_type: s.zero_credit_type,
+  }));
+  
+  return { slots, subjects: templateSubjects };
 }

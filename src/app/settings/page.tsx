@@ -6,6 +6,8 @@ import { PageLoader } from '@/components/Spinner';
 import SubjectsManager from '@/components/SubjectsManager';
 import TimetableBuilder from '@/components/TimetableBuilder';
 import SemesterConfigManager from '@/components/SemesterConfigManager';
+import { ShareTimetableButton } from '@/components/ShareTimetableButton';
+import { ImportTimetableButton } from '@/components/ImportTimetableModal';
 import { Subject, TimetableSlot, SemesterConfig, Holiday } from '@/types';
 
 // SVG Icons
@@ -289,6 +291,18 @@ export default function SettingsPage() {
                 onHolidaysUpdate={handleHolidaysUpdate}
               />
             )}
+          </div>
+        </div>
+
+        {/* Timetable Sharing Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Setup</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Share or import timetables instantly</p>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ShareTimetableButton variant="card" />
+            <ImportTimetableButton variant="card" onImportComplete={() => refresh()} />
           </div>
         </div>
 
