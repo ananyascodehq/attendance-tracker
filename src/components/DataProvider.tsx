@@ -36,6 +36,3 @@ export function useData(): UseSyncedDataResult {
   }
   return context;
 }
-
-// Backwards compatibility export
-export { useData as useAttendanceData };
