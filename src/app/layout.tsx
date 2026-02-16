@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
 import { DataProvider } from '@/components/DataProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'Attendance Tracker',
@@ -19,15 +20,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         <ThemeProvider>
-          <AuthProvider>
-            <DataProvider>
-              <Navigation />
+          <ErrorBoundary>
+            <AuthProvider>
+              <DataProvider>
+                <Navigation />
 
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
-              </main>
-            </DataProvider>
-          </AuthProvider>
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  {children}
+                </main>
+              </DataProvider>
+            </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>
